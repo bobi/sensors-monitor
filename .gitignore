@@ -1,5 +1,8 @@
 .venv/
 testing/
 examples/
+build/
+dist/
+sensors_monitor.egg-info/
 .idea/
 *.iml

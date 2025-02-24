@@ -476,7 +476,7 @@ def handle_exit(_signum, _frame):
     exit(0)
 
 
-if __name__ == "__main__":
+def run():
     parser = optparse.OptionParser(description="Monitor system temperatures, fan speeds, and voltages.")
     parser.add_option("-r", "--refresh", type=int, default=2, help="Refresh rate in seconds (default: 2)")
     parser.add_option("-l", "--live", action="store_true", default=False, help="Live updates")

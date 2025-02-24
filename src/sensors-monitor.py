@@ -26,8 +26,8 @@ console.show_cursor(False)
 
 running = Event()
 
-# CONFIG_FILE = "/etc/sensors-monitor.conf"
-CONFIG_FILE = "sensors-monitor.conf"
+CONFIG_FILE = "/etc/sensors-monitor.conf"
+# CONFIG_FILE = "sensors-monitor.conf"
 
 chip_sort_order = {
     re.compile("^coretemp-.*"): 1,

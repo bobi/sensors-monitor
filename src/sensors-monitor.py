@@ -27,7 +27,6 @@ console.show_cursor(False)
 running = Event()
 
 CONFIG_FILE = "/etc/sensors-monitor.conf"
-# CONFIG_FILE = "sensors-monitor.conf"
 
 chip_sort_order = {
     re.compile("^coretemp-.*"): 1,
@@ -124,7 +123,6 @@ def get_chip_order(chip_id):
 def load_config():
     config_parser = configparser.ConfigParser()
 
-    # config_path = os.path.normpath(os.path.join(os.path.dirname(__file__), CONFIG_FILE))
     config_path = CONFIG_FILE
 
     if os.path.exists(config_path):
@@ -143,15 +141,6 @@ config = load_config()
 
 def get_sensors_json(lm_config: str):
     try:
-        # load json from file
-        # current_dir = os.path.dirname(__file__)
-        # relative_path = os.path.normpath(os.path.join(current_dir, './../testing/sensors.json'))
-        #
-        # with open(relative_path, 'r') as file:
-        #     result = file.read()
-        #
-        # return json.loads(result)
-
         if lm_config is None:
             lm_config = "/dev/null"
 
@@ -207,7 +196,7 @@ def parse_sensors_json(sensors_json: dict) -> SensorsData:
 
     for chip_id, chip_data in sensors_json.items():
         if not is_chip_visible(chip_id):
-            continue  # Skip hidden chips
+            continue
 
         adapter: Optional[str] = None
         if ADAPTER_PROP in chip_data:
@@ -479,7 +468,6 @@ def monitor_sensors(live: bool, refresh_rate: int, lm_config: str):
             while not running.is_set():
                 live.update(build_sensors_ui(lm_config), refresh=True)
                 running.wait(refresh_rate)
-                # time.sleep(refresh_rate)
 
 
 def handle_exit(_signum, _frame):
@@ -488,15 +476,13 @@ def handle_exit(_signum, _frame):
     exit(0)
 
 
-# Main execution
 if __name__ == "__main__":
     parser = optparse.OptionParser(description="Monitor system temperatures, fan speeds, and voltages.")
-    parser.add_option("-r", "--refresh", type=int, default=1, help="Refresh rate in seconds (default: 2)")
-    parser.add_option("-l", "--live", action="store_true", default=True, help="Live updates")
+    parser.add_option("-r", "--refresh", type=int, default=2, help="Refresh rate in seconds (default: 2)")
+    parser.add_option("-l", "--live", action="store_true", default=False, help="Live updates")
     parser.add_option("-s", "--sensors_config", type=str, help="Custom lm-sensoers config")
     options, args = parser.parse_args()
 
-    # Setup signal handlers for Ctrl+C
     signal.signal(signal.SIGINT, handle_exit)
     signal.signal(signal.SIGTERM, handle_exit)
     signal.signal(signal.SIGHUP, handle_exit)

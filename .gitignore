@@ -1,4 +1,5 @@
 .venv/
 testing/
+examples/
 .idea/
 *.iml

@@ -1,6 +1,6 @@
 # Maintainer: Your Name <your.email@example.com>
 pkgname=sensors-monitor
-pkgver=1.0.0
+pkgver=1.0.1
 pkgrel=1
 pkgdesc="A terminal-based system sensors monitor with color-coded output"
 arch=('any')

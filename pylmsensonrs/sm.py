@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import configparser
 import json
 import optparse
@@ -8,7 +7,7 @@ import signal
 import subprocess
 import sys
 from threading import Event
-from typing import Optional
+from typing import Optional, TypeVar
 
 from rich import box
 from rich.align import Align
@@ -158,30 +157,44 @@ def get_sensors_json(lm_config: str):
         exit(1)
 
 
+ConfigValueType = TypeVar('ConfigValueType', int, float, bool, str, None)
+
+
+def get_config_value(
+        section: str,
+        key: str,
+        value_type: type(ConfigValueType),
+        default_value: Optional[ConfigValueType] = None
+) -> ConfigValueType:
+    if section and key and section in config and key in config[section]:
+        if value_type is str:
+            return config[section][key]
+        elif value_type is int:
+            return config[section].getint(key)
+        elif value_type is float:
+            return config[section].getfloat(key)
+        elif value_type is bool:
+            return config[section].getboolean(key)
+
+    return default_value
+
+
 def get_custom_sensor_label(chip_id, sensor_id):
-    if chip_id in config and sensor_id in config[chip_id]:
-        return f"{config[chip_id][sensor_id]}"
-    return sensor_id
+    return get_config_value(chip_id, sensor_id, str, sensor_id)
 
 
 def get_custom_chip_label(chip_id):
-    if chip_id in config and "label" in config[chip_id]:
-        return f"{config[chip_id]['label']}"
-
-    return chip_id
+    return get_config_value(chip_id, "label", str, chip_id)
 
 
 def is_chip_visible(chip_id):
-    if chip_id in config and "visible" in config[chip_id]:
-        return config.getboolean(chip_id, "visible")
-    return True
+    return get_config_value(chip_id, "visible", bool, True)
 
 
 def is_sensoer_visible(chip_id, sensor_id):
-    if chip_id in config and "hidden_sensoers" in config[chip_id]:
-        hidden_sensoers = config[chip_id]["hidden_sensoers"].split(",")
-        if sensor_id in hidden_sensoers:
-            return False
+    hidden_sensoers = get_config_value(chip_id, "hidden_sensoers", str, "").split(",")
+    if sensor_id in hidden_sensoers:
+        return False
     return True
 
 
@@ -477,11 +490,18 @@ def handle_exit(_signum, _frame):
 
 
 def run():
+    default_refresh = get_config_value("defaults", "refresh", int, 2)
+    default_live = get_config_value("defaults", "live", bool, False)
+    default_sensors_config = get_config_value("defaults", "sensors_config", str)
+
     parser = optparse.OptionParser(description="Monitor system temperatures, fan speeds, and voltages.")
-    parser.add_option("-r", "--refresh", type=int, default=2, help="Refresh rate in seconds (default: 2)")
-    parser.add_option("-l", "--live", action="store_true", default=False, help="Live updates")
-    parser.add_option("-s", "--sensors_config", type=str, help="Custom lm-sensoers config")
-    options, args = parser.parse_args()
+    parser.add_option("-r", "--refresh", type=int, default=default_refresh, help="Refresh rate in seconds (default: 2)")
+    parser.add_option("-l", "--live", action="store_true", default=default_live, dest="live", help="Live updates")
+    parser.add_option("-1", "--one-time", action="store_false", default=default_live, dest="live",
+                      help="Temporarily disable live updates if they are enabled by default")
+    parser.add_option("-s", "--sensors_config", type=str, default=default_sensors_config,
+                      help="Custom lm-sensoers config")
+    options, _ = parser.parse_args()
 
     signal.signal(signal.SIGINT, handle_exit)
     signal.signal(signal.SIGTERM, handle_exit)

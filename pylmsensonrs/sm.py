@@ -30,8 +30,7 @@ CONFIG_FILE = "/etc/sensors-monitor.conf"
 chip_sort_order = {
     re.compile("^coretemp-.*"): 1,
     re.compile("^drivetemp-.*"): 2,
-    re.compile("^nvme-.*"): 3,
-    re.compile("^acpitz-.*"): 4,
+    re.compile("^acpitz-.*"): 3,
 }
 
 
@@ -226,7 +225,7 @@ def parse_sensors_json(sensors_json: dict) -> SensorsData:
 
             for name, value in sensoer_values.items():
                 if name.startswith("temp"):
-                    if chip_id.startswith("drivetemp"):
+                    if chip_id.startswith("drivetemp") or chip_id.startswith("nvme"):
                         if name.endswith("_input"):
                             hdd_temps.setdefault(sensor_id, HddTemp(chip_id, sensor_id, adapter)).value = value
                         elif name.endswith("_max"):
@@ -317,7 +316,7 @@ def build_temp_table(temps: [Temp]) -> Optional[Table]:
         return None
 
     table = Table(box=box.MINIMAL)
-    table.add_column("Chip / Sensor", style="magenta", justify="left")
+    table.add_column("Chip / Sensor", style="blue", justify="left")
     table.add_column("Current", style="bold", justify="right")
     table.add_column("High", style="dim", justify="right")
     table.add_column("Critical", style="dim", justify="right")
@@ -346,7 +345,7 @@ def build_hdd_temp_table(temps: [HddTemp]) -> Optional[Table]:
         return None
 
     table = Table(box=box.MINIMAL)
-    table.add_column("Drive", style="magenta", justify="left")
+    table.add_column("Drive", style="blue", justify="left")
     table.add_column("Current", style="bold", justify="right")
     table.add_column("High", style="dim", justify="right")
     table.add_column("Critical", style="dim", justify="right")
@@ -373,7 +372,7 @@ def build_voltage_table(voltages: [Voltage]) -> Optional[Table]:
         return None
 
     table = Table(box=box.MINIMAL)
-    table.add_column("Chip / Sensor", style="magenta", justify="left")
+    table.add_column("Chip / Sensor", style="blue", justify="left")
     table.add_column("Current", style="bold", justify="right")
     table.add_column("Min", style="dim", justify="right")
     table.add_column("Max", style="dim", justify="right")
@@ -402,7 +401,7 @@ def build_fans_table(fans: [FanSpeed]) -> Optional[Table]:
         return None
 
     table = Table(box=box.MINIMAL)
-    table.add_column("Fan", style="magenta", justify="left")
+    table.add_column("Fan", style="blue", justify="left")
     table.add_column("Current", style="bold", justify="right")
     table.add_column("Min", style="dim", justify="right")
 
@@ -429,44 +428,71 @@ def build_sensors_ui(lm_config: str) -> RenderableType:
 
     sensors_data: SensorsData = parse_sensors_json(sensors_json)
 
-    left_tables = []
-    main_tables = []
-    right_tables = []
+    left_top_tables = []
+    left_bottom_tables = []
+    right_top_tables = []
+    right_bottom_tables = []
 
     if table := build_temp_table(sensors_data.temps):
-        left_tables.append(table)
+        left_top_tables.append(table)
     if table := build_hdd_temp_table(sensors_data.hdd_temps):
-        left_tables.append(table)
-    if table := build_voltage_table(sensors_data.volts):
-        main_tables.append(table)
+        left_bottom_tables.append(table)
     if table := build_fans_table(sensors_data.fans):
-        right_tables.append(table)
+        right_top_tables.append(table)
+    if table := build_voltage_table(sensors_data.volts):
+        right_bottom_tables.append(table)
 
     layout = Layout()
 
-    layout.split_row(Layout(name="lside"), Layout(name="main"), Layout(name="rside"))
+    lside = "lside"
+    rside = "rside"
+    lside_top = "lside_top"
+    lside_bottom = "lside_bottom"
+    rside_top = "rside_top"
+    rside_bottom = "rside_bottom"
 
-    if left_tables:
-        layout["lside"].update(Panel(
-            Align.center(Group(*left_tables)),
-            title="[bold cyan]Temperatures[/bold cyan]")
+    layout.split_row(Layout(name=lside), Layout(name=rside))
+
+    layout[lside].split_column(Layout(name=lside_top), Layout(name=lside_bottom))
+    layout[rside].split_column(Layout(name=rside_top), Layout(name=rside_bottom))
+
+    if left_top_tables:
+        layout[lside_top].update(Panel(
+            Align.center(Group(*left_top_tables)),
+            title="[bold cyan]System Temperatures[/bold cyan]")
         )
     else:
-        layout["lside"].visible = False
-    if main_tables:
-        layout["main"].update(Panel(
-            Align.center(Group(*main_tables)),
-            title="[bold cyan]Voltages[/bold cyan]"
-        ))
+        layout[lside_top].visible = False
+
+    if left_bottom_tables:
+        layout[lside_bottom].update(Panel(
+            Align.center(Group(*left_bottom_tables)),
+            title="[bold cyan]Drives Temperatures[/bold cyan]")
+        )
     else:
-        layout["main"].visible = False
-    if right_tables:
-        layout["rside"].update(Panel(
-            Align.center(Group(*right_tables)),
+        layout[lside_bottom].visible = False
+
+    if right_top_tables:
+        layout[rside_top].update(Panel(
+            Align.center(Group(*right_top_tables)),
             title="[bold cyan]Fans[/bold cyan]"
         ))
     else:
-        layout["rside"].visible = False
+        layout[rside_top].visible = False
+
+    if right_bottom_tables:
+        layout[rside_bottom].update(Panel(
+            Align.center(Group(*right_bottom_tables)),
+            title="[bold cyan]Voltages[/bold cyan]"
+        ))
+    else:
+        layout[rside_bottom].visible = False
+
+    if not left_top_tables and not left_bottom_tables:
+        layout[lside].visible = False
+
+    if not right_top_tables and not right_bottom_tables:
+        layout[rside].visible = False
 
     return layout
 

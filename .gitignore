@@ -1,8 +1,6 @@
-.venv/
-testing/
-examples/
-build/
-dist/
-sensors_monitor.egg-info/
+target/
 .idea/
 *.iml
+
+GEMINI.md
+.DS_Store

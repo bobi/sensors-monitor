@@ -1,0 +1,208 @@
+{
+   "it8686-isa-0a30":{
+      "Adapter": "ISA adapter",
+      "in0":{
+         "in0_input": 1.824,
+         "in0_min": 2.712,
+         "in0_max": 0.528,
+         "in0_alarm": 1.000,
+         "in0_beep": 0.000
+      },
+      "in1":{
+         "in1_input": 1.416,
+         "in1_min": 2.148,
+         "in1_max": 0.132,
+         "in1_alarm": 1.000,
+         "in1_beep": 0.000
+      },
+      "in2":{
+         "in2_input": 1.824,
+         "in2_min": 1.500,
+         "in2_max": 1.680,
+         "in2_alarm": 1.000,
+         "in2_beep": 0.000
+      },
+      "in3":{
+         "in3_input": 1.824,
+         "in3_min": 2.052,
+         "in3_max": 2.472,
+         "in3_alarm": 1.000,
+         "in3_beep": 0.000
+      },
+      "in4":{
+         "in4_input": 1.728,
+         "in4_min": 2.748,
+         "in4_max": 2.172,
+         "in4_alarm": 1.000,
+         "in4_beep": 0.000
+      },
+      "in5":{
+         "in5_input": 1.644,
+         "in5_min": 2.424,
+         "in5_max": 2.988,
+         "in5_alarm": 1.000,
+         "in5_beep": 0.000
+      },
+      "in6":{
+         "in6_input": 1.560,
+         "in6_min": 2.556,
+         "in6_max": 0.612,
+         "in6_alarm": 1.000,
+         "in6_beep": 0.000
+      },
+      "3VSB":{
+         "in7_input": 3.600,
+         "in7_min": 0.672,
+         "in7_max": 2.088,
+         "in7_alarm": 1.000,
+         "in7_beep": 0.000
+      },
+      "Vbat":{
+         "in8_input": 3.288
+      },
+      "+3.3V":{
+         "in9_input": 3.624
+      },
+      "fan1":{
+         "fan1_input": 0.000,
+         "fan1_min": 10.000,
+         "fan1_alarm": 1.000,
+         "fan1_beep": 0.000
+      },
+      "fan2":{
+         "fan2_input": 0.000,
+         "fan2_min": 11.000,
+         "fan2_alarm": 1.000,
+         "fan2_beep": 0.000
+      },
+      "fan3":{
+         "fan3_input": 0.000,
+         "fan3_min": 13.000,
+         "fan3_alarm": 1.000,
+         "fan3_beep": 0.000
+      },
+      "fan4":{
+         "fan4_input": 0.000,
+         "fan4_min": -1.000,
+         "fan4_alarm": 1.000,
+         "fan4_beep": 0.000
+      },
+      "fan5":{
+         "fan5_input": 0.000,
+         "fan5_min": -1.000,
+         "fan5_alarm": 1.000,
+         "fan5_beep": 0.000
+      },
+      "temp1":{
+         "temp1_input": 39.000,
+         "temp1_max": 97.000,
+         "temp1_min": 109.000,
+         "temp1_alarm": 0.000,
+         "temp1_type": 8.000,
+         "temp1_offset": 105.000,
+         "temp1_beep": 0.000
+      },
+      "temp2":{
+         "temp2_input": -128.000,
+         "temp2_max": -127.000,
+         "temp2_min": -75.000,
+         "temp2_alarm": 0.000,
+         "temp2_offset": 0.000,
+         "temp2_beep": 0.000
+      },
+      "temp3":{
+         "temp3_input": -128.000,
+         "temp3_max": -17.000,
+         "temp3_min": 47.000,
+         "temp3_alarm": 0.000,
+         "temp3_offset": 105.000,
+         "temp3_beep": 0.000
+      },
+      "intrusion0":{
+         "intrusion0_alarm": 1.000
+      }
+   },
+   "drivetemp-scsi-0-0":{
+      "Adapter": "SCSI adapter",
+      "temp1":{
+         "temp1_input": 24.000,
+         "temp1_max": 55.000,
+         "temp1_min": 14.000,
+         "temp1_crit": 60.000,
+         "temp1_lcrit": 10.000,
+         "temp1_lowest": 23.000,
+         "temp1_highest": 34.000
+      }
+   },
+   "acpitz-acpi-0":{
+      "Adapter": "ACPI interface",
+      "temp1":{
+         "temp1_input": 27.800
+      }
+   },
+   "coretemp-isa-0000":{
+      "Adapter": "ISA adapter",
+      "Package id 0":{
+         "temp1_input": 39.000,
+         "temp1_max": 105.000,
+         "temp1_crit": 105.000,
+         "temp1_crit_alarm": 0.000
+      },
+      "Core 0":{
+         "temp2_input": 34.000,
+         "temp2_max": 105.000,
+         "temp2_crit": 105.000,
+         "temp2_crit_alarm": 0.000
+      },
+      "Core 1":{
+         "temp3_input": 34.000,
+         "temp3_max": 105.000,
+         "temp3_crit": 105.000,
+         "temp3_crit_alarm": 0.000
+      },
+      "Core 2":{
+         "temp4_input": 34.000,
+         "temp4_max": 105.000,
+         "temp4_crit": 105.000,
+         "temp4_crit_alarm": 0.000
+      },
+      "Core 3":{
+         "temp5_input": 34.000,
+         "temp5_max": 105.000,
+         "temp5_crit": 105.000,
+         "temp5_crit_alarm": 0.000
+      }
+   },
+   "drivetemp-scsi-1-0":{
+      "Adapter": "SCSI adapter",
+      "temp1":{
+         "temp1_input": 21.000,
+         "temp1_max": 65.000,
+         "temp1_min": 0.000,
+         "temp1_crit": 85.000,
+         "temp1_lcrit": -41.000,
+         "temp1_lowest": 20.000,
+         "temp1_highest": 29.000
+      }
+   },
+   "nvme-pci-0300":{
+      "Adapter": "PCI adapter",
+      "Composite":{
+         "temp1_input": 38.850,
+         "temp1_max": 83.850,
+         "temp1_min": -40.150,
+         "temp1_crit": 87.850,
+         "temp1_alarm": 0.000
+      },
+      "Sensor 1":{
+         "temp2_input": 53.850,
+         "temp2_max": 65261.850,
+         "temp2_min": -273.150
+      },
+      "Sensor 2":{
+         "temp3_input": 38.850,
+         "temp3_max": 65261.850,
+         "temp3_min": -273.150
+      }
+   }
+}

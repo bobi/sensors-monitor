@@ -7,33 +7,41 @@ A terminal-based system monitor for Linux, displaying system temperatures, fan s
 - Displays CPU, drive, and other hardware temperatures
 - Shows fan speeds and voltages
 - Supports custom labels and visibility via config file
-- Live updating or one-time snapshot modes
 - Color-coded output for easy status recognition
-- Uses [Rich](https://github.com/Textualize/rich) for a modern terminal UI
+- Uses [ratatui](https://ratatui.rs/) for a modern terminal UI
 
-## Requirements
+## Building and Running
 
-- Python 3.8+
-- [lm_sensors](https://github.com/lm-sensors/lm-sensors) installed and available in `$PATH`
-- Python packages: `rich`
+### Building
 
-Install dependencies:
+To build the project, use the Cargo build command:
+
 ```sh
- pip install -r requirements.txt
+cargo build
 ```
 
-## Usage
+To build an optimized release version, use:
 
 ```sh
-python -m pylmsensonrs.sm [options]
+cargo build --release
+```
+
+### Running
+
+To run the application, use the Cargo run command:
+
+```sh
+cargo run -- -c sensors-monitor-odroid.conf
 ```
 
 ### Options
 
-- `-r`, `--refresh` &lt;seconds&gt;: Refresh rate for live mode (default: 2)
-- `-l`, `--live`: Enable live updating (default: off)
-- `-1`, `--one-time`: Disable live updating (overrides default)
-- `-s`, `--sensors_config` &lt;file&gt;: Path to custom `lm_sensors` config
+- `-r`, `--refresh` <seconds>: Refresh interval in seconds (default: 2)
+- `-l`, `--lm-sensors-config` lm-sensors config file
+- `-j`, `--lm-sensors-json` lm-sensors JSON output file path
+- `-c`, `--config` Config file path [default: /etc/sensors-monitor.conf]
+- `-h`, `--help` Print help
+- `-V`, `--version` Print version
 
 ## Configuration
 
@@ -53,7 +61,3 @@ visible = false
 - `label`: Custom chip label
 - `visible`: Show/hide chip
 - `hidden_sensoers`: Comma-separated list of sensor IDs to hide
-
-## Signals
-
-Gracefully exits on `SIGINT`, `SIGTERM`, or `SIGHUP`.

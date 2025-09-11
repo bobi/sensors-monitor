@@ -1,0 +1,10 @@
+[
+  {
+    "command": "cargo run -- -c $ZED_WORKTREE_ROOT/testing/sensors-monitor-odroid-test.conf",
+    "env": {
+      "RUST_BACKTRACE": "full"
+    },
+    "label": "run",
+    "allow_concurrent_runs": false
+  }
+]

@@ -1,0 +1,38 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "adapter": "CodeLLDB",
+    "label": "debug",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/target/debug/sensors-monitor",
+    "args": [
+      "-c",
+      "$ZED_WORKTREE_ROOT/testing/sensors-monitor-odroid-test.conf"
+    ],
+    "env": {
+      "RUST_BACKTRACE": "full"
+    },
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "build": {
+      "label": "cargo build",
+      "command": "cargo",
+      "args": [
+        "build"
+      ],
+      "use_new_terminal": false,
+      "allow_concurrent_runs": false,
+      "reveal": "always",
+      "reveal_target": "dock",
+      "hide": "never",
+      "shell": "system",
+      "show_summary": false,
+      "show_command": false
+    },
+    "sourceLanguages": [
+      "rust"
+    ]
+  }
+]

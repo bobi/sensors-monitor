@@ -6,78 +6,58 @@
       "temp1_max": -0.500000
     }
   },
-  "it8686-isa-0a30": {
+  "it8613-isa-0a30": {
     "Adapter": "ISA adapter",
     "in0": {
-      "in0_input": 1.824000,
-      "in0_min": 2.712000,
-      "in0_max": 0.540000,
+      "in0_input": 1.672000,
+      "in0_min": 2.486000,
+      "in0_max": 0.495000,
       "in0_alarm": 1.000000,
       "in0_beep": 0.000000
     },
     "in1": {
-      "in1_input": 1.416000,
-      "in1_min": 2.148000,
-      "in1_max": 0.132000,
+      "in1_input": 1.298000,
+      "in1_min": 1.969000,
+      "in1_max": 0.121000,
       "in1_alarm": 1.000000,
       "in1_beep": 0.000000
     },
     "in2": {
-      "in2_input": 1.824000,
-      "in2_min": 1.308000,
-      "in2_max": 2.064000,
+      "in2_input": 1.672000,
+      "in2_min": 1.199000,
+      "in2_max": 1.892000,
       "in2_alarm": 0.000000,
       "in2_beep": 0.000000
     },
-    "in3": {
-      "in3_input": 1.824000,
-      "in3_min": 2.052000,
-      "in3_max": 2.676000,
-      "in3_alarm": 1.000000,
-      "in3_beep": 0.000000
-    },
     "in4": {
-      "in4_input": 1.728000,
-      "in4_min": 2.748000,
-      "in4_max": 2.268000,
+      "in4_input": 1.584000,
+      "in4_min": 2.519000,
+      "in4_max": 2.079000,
       "in4_alarm": 1.000000,
       "in4_beep": 0.000000
     },
     "in5": {
-      "in5_input": 1.632000,
-      "in5_min": 2.616000,
-      "in5_max": 2.988000,
+      "in5_input": 1.496000,
+      "in5_min": 2.398000,
+      "in5_max": 2.739000,
       "in5_alarm": 1.000000,
       "in5_beep": 0.000000
     },
-    "in6": {
-      "in6_input": 1.560000,
-      "in6_min": 2.556000,
-      "in6_max": 0.612000,
-      "in6_alarm": 1.000000,
-      "in6_beep": 0.000000
-    },
     "3VSB": {
-      "in7_input": 3.600000,
-      "in7_min": 0.672000,
-      "in7_max": 2.088000,
+      "in7_input": 3.300000,
+      "in7_min": 0.616000,
+      "in7_max": 1.914000,
       "in7_alarm": 1.000000,
       "in7_beep": 0.000000
     },
     "Vbat": {
-      "in8_input": 3.288000
+      "in8_input": 3.014000
     },
     "+3.3V": {
-      "in9_input": 3.624000
-    },
-    "fan1": {
-      "fan1_input": 0.000000,
-      "fan1_min": 11.000000,
-      "fan1_alarm": 1.000000,
-      "fan1_beep": 0.000000
+      "in9_input": 3.322000
     },
     "fan2": {
-      "fan2_input": 1112.000000,
+      "fan2_input": 0.000000,
       "fan2_min": 11.000000,
       "fan2_alarm": 1.000000,
       "fan2_beep": 0.000000
@@ -105,7 +85,6 @@
       "temp1_max": 97.000000,
       "temp1_min": 109.000000,
       "temp1_alarm": 0.000000,
-      "temp1_type": 8.000000,
       "temp1_offset": 105.000000,
       "temp1_beep": 0.000000
     },
@@ -125,11 +104,6 @@
       "temp3_offset": 105.000000,
       "temp3_beep": 0.000000
     },
-    "pwm1": {
-      "pwm1": 64.000000,
-      "pwm1_freq": 23437.000000,
-      "pwm1_enable": 1.000000
-    },
     "pwm2": {
       "pwm2": 63.500000,
       "pwm2_freq": 23437.000000,
@@ -143,12 +117,12 @@
     "pwm4": {
       "pwm4": 64.000000,
       "pwm4_freq": 23437.000000,
-      "pwm4_enable": 2.000000
+      "pwm4_enable": 1.000000
     },
     "pwm5": {
       "pwm5": 64.000000,
       "pwm5_freq": 23437.000000,
-      "pwm5_enable": 2.000000
+      "pwm5_enable": 1.000000
     },
     "intrusion0": {
       "intrusion0_alarm": 1.000000
@@ -157,7 +131,7 @@
   "drivetemp-scsi-0-0": {
     "Adapter": "SCSI adapter",
     "temp1": {
-      "temp1_input": 27.000000,
+      "temp1_input": 30.000000,
       "temp1_max": 55.000000,
       "temp1_min": 14.000000,
       "temp1_crit": 60.000000,
@@ -193,13 +167,13 @@
       "temp3_crit_alarm": 0.000000
     },
     "Core 2": {
-      "temp4_input": 36.000000,
+      "temp4_input": 35.000000,
       "temp4_max": 105.000000,
       "temp4_crit": 105.000000,
       "temp4_crit_alarm": 0.000000
     },
     "Core 3": {
-      "temp5_input": 36.000000,
+      "temp5_input": 35.000000,
       "temp5_max": 105.000000,
       "temp5_crit": 105.000000,
       "temp5_crit_alarm": 0.000000
@@ -208,20 +182,20 @@
   "r8169_0_100:00-mdio-0": {
     "Adapter": "MDIO adapter",
     "temp1": {
-      "temp1_input": 42.500000,
+      "temp1_input": 43.000000,
       "temp1_max": 120.000000
     }
   },
   "drivetemp-scsi-1-0": {
     "Adapter": "SCSI adapter",
     "temp1": {
-      "temp1_input": 25.000000,
+      "temp1_input": 28.000000,
       "temp1_max": 65.000000,
       "temp1_min": 0.000000,
       "temp1_crit": 85.000000,
       "temp1_lcrit": -41.000000,
       "temp1_lowest": 20.000000,
-      "temp1_highest": 27.000000
+      "temp1_highest": 28.000000
     }
   },
   "nvme-pci-0300": {

@@ -29,7 +29,11 @@ fn get_colored_temp(temp: &Option<f64>, high: &Option<f64>) -> Cell<'static> {
     cell_current_value(val_temp(temp)).style(style)
 }
 
-fn get_colored_voltage(voltage: &Option<f64>, min: &Option<f64>, max: &Option<f64>) -> Cell<'static> {
+fn get_colored_voltage(
+    voltage: &Option<f64>,
+    min: &Option<f64>,
+    max: &Option<f64>,
+) -> Cell<'static> {
     let voltage_val = voltage.unwrap_or_else(|| 0.0);
 
     let min_val = min.unwrap_or(f64::MIN);
@@ -98,6 +102,7 @@ fn row_margin_top(last_chip_id: &Option<String>, chip_id: &String) -> u16 {
 }
 
 const TABLE_BLOCK_PADDING: Padding = Padding::symmetric(2, 1);
+const TABLE_COLUMN_SPACING: u16 = 2;
 
 impl<'a> Widget for SmUi<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -197,7 +202,7 @@ impl<'a> SmUi<'a> {
         let temp_table = Table::new(rows, [Fill(2), Fill(1), Fill(1), Fill(1)])
             .header(header)
             .block(block)
-            .column_spacing(2);
+            .column_spacing(TABLE_COLUMN_SPACING);
 
         Widget::render(temp_table, area, buf);
     }
@@ -234,7 +239,7 @@ impl<'a> SmUi<'a> {
         let fans_table = Table::new(rows, [Fill(2), Fill(1), Fill(1)])
             .header(header)
             .block(block)
-            .column_spacing(2);
+            .column_spacing(TABLE_COLUMN_SPACING);
 
         Widget::render(fans_table, area, buf);
     }
@@ -275,7 +280,7 @@ impl<'a> SmUi<'a> {
             Table::new(rows, [Fill(3), Fill(1), Fill(1), Fill(1), Fill(1), Fill(1)])
                 .header(header)
                 .block(block)
-                .column_spacing(2);
+                .column_spacing(TABLE_COLUMN_SPACING);
 
         Widget::render(hdd_temp_table, area, buf);
     }
@@ -314,7 +319,7 @@ impl<'a> SmUi<'a> {
         let voltage_table = Table::new(rows, [Fill(2), Fill(1), Fill(1), Fill(1)])
             .header(header)
             .block(block)
-            .column_spacing(2);
+            .column_spacing(TABLE_COLUMN_SPACING);
 
         Widget::render(voltage_table, area, buf);
     }

@@ -1,4 +1,4 @@
-use clap::{Parser, builder::ArgPredicate};
+use clap::Parser;
 
 #[derive(Parser, Debug, Clone)]
 #[clap(author, version, about, long_about = None)]

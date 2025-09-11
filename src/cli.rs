@@ -7,7 +7,7 @@ pub struct SmArgs {
         short = 'r',
         long = "refresh",
         value_name = "Refresh interval in seconds",
-        default_value_if("refresh", ArgPredicate::IsPresent, Some("2"))
+        default_value = Some("2")
     )]
     pub refresh: Option<u16>,
     #[clap(
@@ -26,7 +26,7 @@ pub struct SmArgs {
         short = 'c',
         long = "config",
         value_name = "Config file path",
-        default_value_if("config", ArgPredicate::IsPresent, Some("/etc/sensors-monitor.conf"))
+        default_value = Some("/etc/sensors-monitor.conf")
     )]
     pub config: Option<String>,
 }

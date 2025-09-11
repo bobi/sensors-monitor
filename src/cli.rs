@@ -6,8 +6,7 @@ pub struct SmArgs {
     #[clap(
         short = 'r',
         long = "refresh",
-        value_name = "Refresh interval in seconds",
-        default_value = Some("2")
+        value_name = "Refresh interval in seconds"
     )]
     pub refresh: Option<u16>,
     #[clap(

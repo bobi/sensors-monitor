@@ -42,7 +42,7 @@ struct App<'a> {
     exit: bool,
     args: &'a SmArgs,
     config: &'a SmConfig,
-    refresh_rate: u16,
+    refresh_rate: Duration,
     lm_sensors_config: Option<String>,
     lm_sensors_json: Option<String>,
 }
@@ -55,14 +55,15 @@ impl<'a> App<'a> {
             exit: false,
             args,
             config,
-            refresh_rate: 0,
+            refresh_rate: Duration::from_millis(0),
             lm_sensors_config: None,
             lm_sensors_json: None,
         }
     }
 
     fn configure(mut self) -> Self {
-        self.refresh_rate = self.args.refresh.unwrap_or(self.config.defaults.refresh);
+        self.refresh_rate =
+            Duration::from_millis(self.args.refresh.unwrap_or(self.config.defaults.refresh));
 
         self.lm_sensors_config = self.args.lm_sensors_config.clone().or(self
             .config
@@ -81,14 +82,13 @@ impl<'a> App<'a> {
 
     fn run(mut self, mut terminal: DefaultTerminal) -> Result<(), Box<dyn std::error::Error>> {
         let tick_rate = Duration::from_millis(TICK_RATE);
-        let refresh_duration = Duration::from_secs(u64::from(self.refresh_rate));
 
         let mut sensor_data = None;
         let mut last_tick = Instant::now();
         let mut last_refresh = Instant::now();
 
         while self.is_running() {
-            if last_refresh.elapsed() >= refresh_duration || sensor_data.is_none() {
+            if last_refresh.elapsed() >= self.refresh_rate || sensor_data.is_none() {
                 sensor_data = Some(sensors::get_data(
                     &self.lm_sensors_config,
                     &self.lm_sensors_json,
@@ -101,7 +101,7 @@ impl<'a> App<'a> {
             if sensor_data.is_some() {
                 terminal.draw(|f| {
                     f.render_widget(
-                        ui::SmUi::new(sensor_data.as_ref().unwrap(), self.refresh_rate),
+                        ui::SmUi::new(sensor_data.as_ref().unwrap(), &self.refresh_rate),
                         f.area(),
                     )
                 })?;

@@ -1,16 +1,17 @@
 use crate::sensors;
-use chrono::Local;
+use humantime::format_duration;
 use ratatui::{
     layout::Constraint::Fill,
     prelude::*,
     style::Style,
     widgets::{Block, Cell, Padding, Row, Table, Widget},
 };
+use std::time::Duration;
 
 #[derive(Debug, Clone)]
 pub struct SmUi<'a> {
     data: &'a sensors::SensorsData,
-    refresh_rate: u16,
+    refresh_rate: &'a Duration,
 }
 
 fn get_colored_temp(temp: &Option<f64>, high: &Option<f64>) -> Cell<'static> {
@@ -106,9 +107,6 @@ const TABLE_COLUMN_SPACING: u16 = 2;
 
 impl<'a> Widget for SmUi<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let datetime = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-        let refresh_rate = self.refresh_rate;
-
         let main_block = Block::default().padding(Padding::symmetric(2, 1));
 
         let [top_area, bottom_area] = Layout::vertical([Fill(1), Fill(1)])
@@ -137,8 +135,21 @@ impl<'a> Widget for SmUi<'a> {
             Block::bordered()
                 .padding(TABLE_BLOCK_PADDING)
                 .title(Line::from(" Fans ").fg(Color::Cyan).bold())
-                .title(Line::from(format!("[{}s]", refresh_rate)).right_aligned())
-                .title(Line::from(format!("[{}]", datetime)).right_aligned()),
+                .title(
+                    Line::from(format!("[{}]", format_duration(*self.refresh_rate)))
+                        .right_aligned(),
+                )
+                .title(
+                    Line::from(format!(
+                        "[{}]",
+                        time_format::strftime_local(
+                            "%Y-%m-%d %H:%M:%S",
+                            time_format::now().expect("Could not get current time")
+                        )
+                        .expect("Could not format time")
+                    ))
+                    .right_aligned(),
+                ),
         );
 
         self.draw_hdd_temp_table(
@@ -162,7 +173,7 @@ impl<'a> Widget for SmUi<'a> {
 }
 
 impl<'a> SmUi<'a> {
-    pub fn new(data: &'a sensors::SensorsData, refresh_rate: u16) -> Self {
+    pub fn new(data: &'a sensors::SensorsData, refresh_rate: &'a Duration) -> Self {
         SmUi { data, refresh_rate }
     }
 

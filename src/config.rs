@@ -5,13 +5,13 @@ use std::collections::HashMap;
 #[derive(Debug, Deserialize, Clone)]
 pub struct SmConfigDefaults {
     #[serde(default = "default_refresh")]
-    pub refresh: u16,
+    pub refresh: u64,
     pub lm_sensors_json: Option<String>,
     pub lm_sensors_config: Option<String>,
 }
 
-fn default_refresh() -> u16 {
-    2
+fn default_refresh() -> u64 {
+    2000
 }
 
 #[derive(Debug, Clone)]

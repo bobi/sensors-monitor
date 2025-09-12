@@ -1,5 +1,4 @@
 use crate::config::SmConfig;
-use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::Deserialize;
 use serde_json::Value;
@@ -7,7 +6,7 @@ use std::collections::HashMap;
 use std::io::ErrorKind;
 use std::process::Command;
 
-static NULL_DEVICE: Lazy<String> = Lazy::new(|| "/dev/null".to_string());
+const NULL_DEVICE: &str = "/dev/null";
 
 #[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
@@ -258,17 +257,19 @@ fn get_sensors_data_from_command(
     let output = match Command::new("sensors")
         .args([
             "-c",
-            lm_sensors_config.as_ref().unwrap_or(&NULL_DEVICE),
+            lm_sensors_config
+                .as_ref()
+                .unwrap_or(&NULL_DEVICE.to_string()),
             "-j",
         ])
         .output()
     {
         Ok(output) => output,
         Err(e) => {
-            if e.kind() == ErrorKind::NotFound {
-                return Err("The `sensors` command was not found. Please make sure `lm-sensors` is installed and in your PATH.".into());
+            return if e.kind() == ErrorKind::NotFound {
+                Err("The `sensors` command was not found. Please make sure `lm-sensors` is installed and in your PATH.".into())
             } else {
-                return Err(e.into());
+                Err(e.into())
             }
         }
     };

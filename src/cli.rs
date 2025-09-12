@@ -6,9 +6,9 @@ pub struct SmArgs {
     #[clap(
         short = 'r',
         long = "refresh",
-        value_name = "Refresh interval in seconds"
+        value_name = "Refresh interval in milliseconds"
     )]
-    pub refresh: Option<u16>,
+    pub refresh: Option<u64>,
     #[clap(
         short = 'l',
         long = "lm-sensors-config",

@@ -7,7 +7,7 @@ arch=('any')
 url="https://github.com/bobi/sensors-monitor"
 license=('MIT')
 depends=('lm_sensors')
-makedepends=(cargo, sed, grep, git)
+makedepends=('cargo' 'sed' 'grep' 'git')
 source=()
 # sha256sums=('SKIP' 'SKIP')
 

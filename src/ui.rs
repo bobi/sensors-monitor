@@ -141,7 +141,7 @@ impl<'a> Widget for SmUi<'a> {
                 )
                 .title(
                     Line::from(format!(
-                        "[{}]",
+                        "![{}]",
                         time_format::strftime_local(
                             "%Y-%m-%d %H:%M:%S",
                             time_format::now().expect("Could not get current time")

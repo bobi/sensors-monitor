@@ -136,7 +136,7 @@ impl<'a> Widget for SmUi<'a> {
                 .padding(TABLE_BLOCK_PADDING)
                 .title(Line::from(" Fans ").fg(Color::Cyan).bold())
                 .title(
-                    Line::from(format!("![{}]!", format_duration(*self.refresh_rate)))
+                    Line::from(format!("[{}]", format_duration(*self.refresh_rate)))
                         .right_aligned(),
                 )
                 .title(

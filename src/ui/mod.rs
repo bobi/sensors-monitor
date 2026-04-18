@@ -19,6 +19,11 @@ trait SensorItem {
     fn chip_label(&self) -> &str;
 }
 
+impl SensorItem for sensors::Temp {
+    fn chip_id(&self) -> &str { &self.chip_id }
+    fn chip_label(&self) -> &str { &self.chip_label }
+}
+
 impl SensorItem for sensors::HddTemp {
     fn chip_id(&self) -> &str { &self.chip_id }
     fn chip_label(&self) -> &str { &self.chip_label }
@@ -181,48 +186,14 @@ impl<'a> SmUi<'a> {
     }
 
     fn draw_system_temperatures(&self, area: Rect, buf: &mut Buffer, block: Block<'_>) {
-        let temps = &self.data.temps;
-        if temps.is_empty() {
-            draw_empty_panel(block, area, buf);
-            return;
-        }
-
-        let inner = block.inner(area);
-        Widget::render(block, area, buf);
-
-        enum Entry<'b> {
-            Blank,
-            ChipLabel(&'b str),
-            Sensor(&'b sensors::Temp),
-        }
-
-        let mut entries: Vec<Entry> = vec![];
-        let mut last_chip: Option<&str> = None;
-        for temp in temps {
-            if last_chip != Some(temp.chip_id.as_str()) {
-                if last_chip.is_some() {
-                    entries.push(Entry::Blank);
-                }
-                entries.push(Entry::ChipLabel(&temp.chip_label));
-                last_chip = Some(&temp.chip_id);
-            } else {
-                entries.push(Entry::Blank);
-            }
-            entries.push(Entry::Sensor(temp));
-        }
-
-        let constraints: Vec<Constraint> = entries.iter().map(|_| Length(1)).collect();
-        let row_areas = Layout::vertical(constraints).split(inner);
-
-        for (entry, &row_area) in entries.iter().zip(row_areas.iter()) {
-            match entry {
-                Entry::Blank => {}
-                Entry::ChipLabel(label) => render_chip_label(label, row_area, buf),
-                Entry::Sensor(t) => {
-                    render_temp_row(&t.sensor_label, &t.value, &t.high, row_area, buf)
-                }
-            }
-        }
+        render_sensor_panel(
+            &self.data.temps,
+            area,
+            buf,
+            block,
+            |t, a, b| render_temp_row(format!("  {}", t.sensor_label).fg(Color::LightBlue), &t.value, &t.high, a, b),
+            |t, a, b| render_temp_row(t.chip_label.as_str().fg(Color::White).bold(), &t.value, &t.high, a, b),
+        );
     }
 
     fn draw_hdd_temp_table(&self, area: Rect, buf: &mut Buffer, block: Block<'_>) {

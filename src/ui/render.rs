@@ -18,8 +18,8 @@ pub(super) fn render_chip_label(label: &str, area: Rect, buf: &mut Buffer) {
     Paragraph::new(label.fg(Color::White).bold()).render(area, buf);
 }
 
-pub(super) fn render_temp_row(
-    label: &str,
+pub(super) fn render_temp_row<'a>(
+    label: Span<'a>,
     value: &Option<f64>,
     high: &Option<f64>,
     area: Rect,
@@ -31,7 +31,7 @@ pub(super) fn render_temp_row(
     let high_val = high.unwrap_or(100.0);
     let color = temp_color(temp_val, high_val);
 
-    Paragraph::new(format!("  {}", label).fg(Color::LightBlue)).render(label_a, buf);
+    Paragraph::new(label).render(label_a, buf);
 
     let ratio = (temp_val / high_val).clamp(0.0, 1.0);
 

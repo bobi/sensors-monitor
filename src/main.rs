@@ -1,13 +1,9 @@
 use crate::{cli::SmArgs, config::SmConfig};
 use clap::Parser;
 use color_eyre::Result;
-use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind};
-use crossterm::execute;
+use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::DefaultTerminal;
-use std::{
-    io::stdout,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 mod cli;
 mod config;
@@ -20,15 +16,9 @@ fn main() -> Result<()> {
     let args = SmArgs::parse();
     let config = config::load_config(&args.config)?;
 
-    let mut stdout = stdout();
-    execute!(stdout, EnableMouseCapture)?;
-
     let terminal = ratatui::init();
     let res = App::new(&args, &config).run(terminal);
-
     ratatui::restore();
-    execute!(stdout, DisableMouseCapture)?;
-
     res
 }
 
@@ -61,13 +51,8 @@ impl<'a> App<'a> {
 
     fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
         let mut last_tick = Instant::now();
-        let mut last_refresh = Instant::now();
-
-        let mut sensor_data = sensors::get_data(
-            self.lm_sensors_config.as_deref(),
-            self.lm_sensors_json.as_deref(),
-            self.config,
-        )?;
+        let mut last_refresh = Instant::now() - self.refresh_rate;
+        let mut sensor_data = sensors::SensorsData::default();
 
         while self.is_running() {
             if last_refresh.elapsed() >= self.refresh_rate {

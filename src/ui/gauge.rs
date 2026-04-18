@@ -9,7 +9,7 @@ pub struct BlockGauge<'a> {
 
 impl<'a> BlockGauge<'a> {
     pub fn ratio(mut self, ratio: f64) -> Self {
-        assert!((0.0..=1.0).contains(&ratio), "Ratio should be between 0 and 1 inclusively.");
+        debug_assert!((0.0..=1.0).contains(&ratio), "Ratio should be between 0 and 1 inclusively.");
         self.ratio = ratio;
         self
     }

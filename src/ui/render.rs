@@ -66,17 +66,7 @@ pub(super) fn render_hdd_row<'a>(
 ) {
     let [label_a, gauge_a] = row_cols(area);
     render_text(label, label_a, buf);
-    render_hdd_gauge(value, high, lowest, highest, gauge_a, buf);
-}
 
-fn render_hdd_gauge(
-    value: &Option<f64>,
-    high: &Option<f64>,
-    lowest: &Option<f64>,
-    highest: &Option<f64>,
-    area: Rect,
-    buf: &mut Buffer,
-) {
     let temp_val = value.unwrap_or(0.0);
     let high_val = high.unwrap_or(100.0);
     let color = temp_color(temp_val, high_val);
@@ -94,7 +84,7 @@ fn render_hdd_gauge(
         .gauge_style(Style::default().fg(color).on_dark_gray())
         .ratio(ratio)
         .label(Line::from(spans))
-        .render(area, buf);
+        .render(gauge_a, buf);
 }
 
 pub(super) fn render_fan_row<'a>(

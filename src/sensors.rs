@@ -8,7 +8,6 @@ use std::process::Command;
 const NULL_DEVICE: &str = "/dev/null";
 
 #[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
 pub struct Temp {
     pub chip_id: String,
     pub chip_label: String,
@@ -16,11 +15,11 @@ pub struct Temp {
     pub chip_order: i32,
     pub value: Option<f64>,
     pub high: Option<f64>,
+    #[allow(dead_code)]
     pub critical: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
 pub struct HddTemp {
     pub chip_id: String,
     pub chip_label: String,
@@ -28,13 +27,13 @@ pub struct HddTemp {
     pub chip_order: i32,
     pub value: Option<f64>,
     pub high: Option<f64>,
+    #[allow(dead_code)]
     pub critical: Option<f64>,
     pub lowest: Option<f64>,
     pub highest: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
 pub struct Voltage {
     pub chip_id: String,
     pub chip_label: String,
@@ -46,7 +45,6 @@ pub struct Voltage {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-#[allow(unused)]
 pub struct FanSpeed {
     pub chip_id: String,
     pub chip_label: String,

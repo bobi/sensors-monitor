@@ -45,7 +45,6 @@ pub fn load_config(config_file: &str) -> Result<SmConfig, ConfigError> {
     let mut sm_config = SmConfig::default();
 
     if let Ok(config_table) = config.collect() {
-        let mut sections = HashMap::new();
         for (key, value) in config_table {
             if key == DEFAULTS_SECTION {
                 if let Ok(defaults) = value.try_deserialize::<SmConfigDefaults>() {
@@ -56,10 +55,9 @@ pub fn load_config(config_file: &str) -> Result<SmConfig, ConfigError> {
                 for (sub_key, sub_value) in section_table {
                     section.insert(sub_key, sub_value.into_string().unwrap_or_default());
                 }
-                sections.insert(key, section);
+                sm_config.sensors.insert(key, section);
             }
         }
-        sm_config.sensors = sections;
     }
 
     Ok(sm_config)

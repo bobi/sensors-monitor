@@ -7,7 +7,6 @@ use humantime::format_duration;
 use ratatui::{
     layout::Constraint::{Fill, Length},
     prelude::*,
-    style::Style,
     widgets::{Block, Padding, Paragraph, Widget},
 };
 use render::{draw_empty_panel, render_chip_label, render_fan_row, render_hdd_row, render_temp_row, render_volt_row};
@@ -45,7 +44,6 @@ enum SensorEntry<'a, T> {
 fn build_sensor_entries<'a, T: SensorItem>(items: &'a [T]) -> Vec<SensorEntry<'a, T>> {
     let mut entries: Vec<SensorEntry<'a, T>> = vec![];
     let mut last_chip: Option<&'a str> = None;
-    let mut prev_was_sensor = false;
     let mut iter = items.iter().peekable();
     while let Some(item) = iter.next() {
         let new_chip = last_chip != Some(item.chip_id());
@@ -60,11 +58,10 @@ fn build_sensor_entries<'a, T: SensorItem>(items: &'a [T]) -> Vec<SensorEntry<'a
                 continue;
             }
             entries.push(SensorEntry::ChipLabel(item.chip_label()));
-        } else if prev_was_sensor {
+        } else {
             entries.push(SensorEntry::Blank);
         }
         entries.push(SensorEntry::Sensor(item));
-        prev_was_sensor = true;
     }
     entries
 }
@@ -174,15 +171,9 @@ impl<'a> SmUi<'a> {
 
         Widget::render(
             Paragraph::new(Line::from(vec![
-                Span::styled(
-                    format!(
-                        " {}  refresh: {}  ",
-                        time_str,
-                        format_duration(*self.refresh_rate)
-                    ),
-                    Style::default().fg(Color::Gray),
-                ),
-                Span::styled("q: quit", Style::default().fg(Color::DarkGray)),
+                format!(" {}  refresh: {}  ", time_str, format_duration(*self.refresh_rate))
+                    .fg(Color::Gray),
+                "q: quit".fg(Color::DarkGray),
             ])),
             area,
             buf,

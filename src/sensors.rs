@@ -55,6 +55,7 @@ pub struct FanSpeed {
     pub chip_order: i32,
     pub value: Option<f64>,
     pub min: Option<f64>,
+    pub alarm: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -167,7 +168,7 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
                                         });
                                     if name.ends_with("_input") {
                                         entry.value = Some(value);
-                                    } else if name.ends_with("_max") {
+                                    } else if name.ends_with("_max") && value <= 150.0 {
                                         entry.high = Some(value);
                                     } else if name.ends_with("_crit") {
                                         entry.critical = Some(value);
@@ -206,11 +207,14 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
                                     chip_order: get_chip_order(chip_id),
                                     value: None,
                                     min: None,
+                                    alarm: None,
                                 });
                                 if name.ends_with("_input") {
                                     entry.value = Some(value);
                                 } else if name.ends_with("_min") {
                                     entry.min = Some(value);
+                                } else if name.ends_with("_alarm") {
+                                    entry.alarm = Some(value != 0.0);
                                 }
                             } else if name.starts_with("in") {
                                 let entry = volts.entry(sensor_id.clone()).or_insert(Voltage {

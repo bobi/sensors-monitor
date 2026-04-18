@@ -17,7 +17,7 @@ mod sensors;
 mod ui;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = cli::SmArgs::parse();
+    let args = SmArgs::parse();
 
     let config = config::load_config(&args.config)?;
 

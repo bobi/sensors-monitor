@@ -10,18 +10,104 @@ use ratatui::{
     style::Style,
     widgets::{Block, Padding, Paragraph, Widget},
 };
-use render::{draw_empty_panel, render_chip_label, render_fan_combined_row, render_fan_row, render_hdd_combined_row, render_hdd_row, render_temp_row, render_volt_combined_row, render_volt_row};
+use render::{
+    draw_empty_panel, render_chip_label, render_fan_combined_row, render_fan_row,
+    render_hdd_combined_row, render_hdd_row, render_temp_row, render_volt_combined_row,
+    render_volt_row,
+};
 use std::time::Duration;
 
 const TABLE_BLOCK_PADDING: Padding = Padding::symmetric(2, 1);
+
+trait SensorItem {
+    fn chip_id(&self) -> &str;
+    fn chip_label(&self) -> &str;
+}
+
+impl SensorItem for sensors::HddTemp {
+    fn chip_id(&self) -> &str { &self.chip_id }
+    fn chip_label(&self) -> &str { &self.chip_label }
+}
+
+impl SensorItem for sensors::FanSpeed {
+    fn chip_id(&self) -> &str { &self.chip_id }
+    fn chip_label(&self) -> &str { &self.chip_label }
+}
+
+impl SensorItem for sensors::Voltage {
+    fn chip_id(&self) -> &str { &self.chip_id }
+    fn chip_label(&self) -> &str { &self.chip_label }
+}
+
+enum SensorEntry<'a, T> {
+    Blank,
+    ChipLabel(&'a str),
+    Sensor(&'a T),
+    Combined(&'a T),
+}
+
+fn build_sensor_entries<'a, T: SensorItem>(items: &'a [T]) -> Vec<SensorEntry<'a, T>> {
+    let mut entries: Vec<SensorEntry<'a, T>> = vec![];
+    let mut last_chip: Option<&'a str> = None;
+    let mut prev_was_sensor = false;
+    let mut iter = items.iter().peekable();
+    while let Some(item) = iter.next() {
+        let new_chip = last_chip != Some(item.chip_id());
+        if new_chip {
+            if last_chip.is_some() {
+                entries.push(SensorEntry::Blank);
+            }
+            last_chip = Some(item.chip_id());
+            let next_same_chip = iter.peek().is_some_and(|n| n.chip_id() == item.chip_id());
+            if !next_same_chip {
+                entries.push(SensorEntry::Combined(item));
+                prev_was_sensor = true;
+                continue;
+            }
+            entries.push(SensorEntry::ChipLabel(item.chip_label()));
+        } else if prev_was_sensor {
+            entries.push(SensorEntry::Blank);
+        }
+        entries.push(SensorEntry::Sensor(item));
+        prev_was_sensor = true;
+    }
+    entries
+}
+
+fn render_sensor_panel<T: SensorItem>(
+    items: &[T],
+    area: Rect,
+    buf: &mut Buffer,
+    block: Block<'_>,
+    render_sensor: impl Fn(&T, Rect, &mut Buffer),
+    render_combined: impl Fn(&T, Rect, &mut Buffer),
+) {
+    if items.is_empty() {
+        draw_empty_panel(block, area, buf);
+        return;
+    }
+    let inner = block.inner(area);
+    Widget::render(block, area, buf);
+    let entries = build_sensor_entries(items);
+    let constraints: Vec<Constraint> = entries.iter().map(|_| Length(1)).collect();
+    let row_areas = Layout::vertical(constraints).split(inner);
+    for (entry, &row_area) in entries.iter().zip(row_areas.iter()) {
+        match entry {
+            SensorEntry::Blank => {}
+            SensorEntry::ChipLabel(label) => render_chip_label(label, row_area, buf),
+            SensorEntry::Sensor(t) => render_sensor(t, row_area, buf),
+            SensorEntry::Combined(t) => render_combined(t, row_area, buf),
+        }
+    }
+}
+
+// ── Widget impl ────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone)]
 pub struct SmUi<'a> {
     data: &'a sensors::SensorsData,
     refresh_rate: &'a Duration,
 }
-
-// ── Widget impl ────────────────────────────────────────────────────────────────
 
 impl<'a> Widget for SmUi<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -156,211 +242,35 @@ impl<'a> SmUi<'a> {
     }
 
     fn draw_hdd_temp_table(&self, area: Rect, buf: &mut Buffer, block: Block<'_>) {
-        let hdd_temps = &self.data.hdd_temps;
-        if hdd_temps.is_empty() {
-            draw_empty_panel(block, area, buf);
-            return;
-        }
-
-        let inner = block.inner(area);
-        Widget::render(block, area, buf);
-
-        enum Entry<'b> {
-            Blank,
-            ChipLabel(&'b str),
-            Sensor(&'b sensors::HddTemp),
-            CombinedSensor(&'b sensors::HddTemp),
-        }
-
-        let mut entries: Vec<Entry> = vec![];
-        let mut last_chip: Option<&str> = None;
-        let mut prev_was_sensor = false;
-        let mut iter = hdd_temps.iter().peekable();
-        while let Some(temp) = iter.next() {
-            let new_chip = last_chip != Some(temp.chip_id.as_str());
-            if new_chip {
-                if last_chip.is_some() {
-                    entries.push(Entry::Blank);
-                }
-                last_chip = Some(&temp.chip_id);
-                let next_same_chip = iter.peek().map_or(false, |n| n.chip_id == temp.chip_id);
-                if !next_same_chip {
-                    entries.push(Entry::CombinedSensor(temp));
-                    prev_was_sensor = true;
-                    continue;
-                }
-                entries.push(Entry::ChipLabel(&temp.chip_label));
-            } else if prev_was_sensor {
-                entries.push(Entry::Blank);
-            }
-            entries.push(Entry::Sensor(temp));
-            prev_was_sensor = true;
-        }
-
-        let constraints: Vec<Constraint> = entries.iter().map(|_| Length(1)).collect();
-        let row_areas = Layout::vertical(constraints).split(inner);
-
-        for (entry, &row_area) in entries.iter().zip(row_areas.iter()) {
-            match entry {
-                Entry::Blank => {}
-                Entry::ChipLabel(label) => render_chip_label(label, row_area, buf),
-                Entry::Sensor(t) => render_hdd_row(
-                    &t.sensor_label,
-                    &t.value,
-                    &t.high,
-                    &t.lowest,
-                    &t.highest,
-                    row_area,
-                    buf,
-                ),
-                Entry::CombinedSensor(t) => render_hdd_combined_row(
-                    &t.chip_label,
-                    &t.value,
-                    &t.high,
-                    &t.lowest,
-                    &t.highest,
-                    row_area,
-                    buf,
-                ),
-            }
-        }
+        render_sensor_panel(
+            &self.data.hdd_temps,
+            area,
+            buf,
+            block,
+            |t, a, b| render_hdd_row(&t.sensor_label, &t.value, &t.high, &t.lowest, &t.highest, a, b),
+            |t, a, b| render_hdd_combined_row(&t.chip_label, &t.value, &t.high, &t.lowest, &t.highest, a, b),
+        );
     }
 
     fn draw_fans_table(&self, area: Rect, buf: &mut Buffer, block: Block<'_>) {
-        let fans = &self.data.fans;
-        if fans.is_empty() {
-            draw_empty_panel(block, area, buf);
-            return;
-        }
-
-        let inner = block.inner(area);
-        Widget::render(block, area, buf);
-
-        enum Entry<'b> {
-            Blank,
-            ChipLabel(&'b str),
-            Sensor(&'b sensors::FanSpeed),
-            CombinedSensor(&'b sensors::FanSpeed),
-        }
-
-        let mut entries: Vec<Entry> = vec![];
-        let mut last_chip: Option<&str> = None;
-        let mut prev_was_sensor = false;
-        let mut iter = fans.iter().peekable();
-        while let Some(fan) = iter.next() {
-            let new_chip = last_chip != Some(fan.chip_id.as_str());
-            if new_chip {
-                if last_chip.is_some() {
-                    entries.push(Entry::Blank);
-                }
-                last_chip = Some(&fan.chip_id);
-                let next_same_chip = iter.peek().map_or(false, |n| n.chip_id == fan.chip_id);
-                if !next_same_chip {
-                    entries.push(Entry::CombinedSensor(fan));
-                    prev_was_sensor = true;
-                    continue;
-                }
-                entries.push(Entry::ChipLabel(&fan.chip_label));
-            } else if prev_was_sensor {
-                entries.push(Entry::Blank);
-            }
-            entries.push(Entry::Sensor(fan));
-            prev_was_sensor = true;
-        }
-
-        let constraints: Vec<Constraint> = entries.iter().map(|_| Length(1)).collect();
-        let row_areas = Layout::vertical(constraints).split(inner);
-
-        for (entry, &row_area) in entries.iter().zip(row_areas.iter()) {
-            match entry {
-                Entry::Blank => {}
-                Entry::ChipLabel(label) => render_chip_label(label, row_area, buf),
-                Entry::Sensor(f) => render_fan_row(
-                    &f.sensor_label,
-                    &f.value,
-                    &f.min,
-                    &f.alarm,
-                    row_area,
-                    buf,
-                ),
-                Entry::CombinedSensor(f) => render_fan_combined_row(
-                    &f.chip_label,
-                    &f.value,
-                    &f.min,
-                    &f.alarm,
-                    row_area,
-                    buf,
-                ),
-            }
-        }
+        render_sensor_panel(
+            &self.data.fans,
+            area,
+            buf,
+            block,
+            |f, a, b| render_fan_row(&f.sensor_label, &f.value, &f.min, &f.alarm, a, b),
+            |f, a, b| render_fan_combined_row(&f.chip_label, &f.value, &f.min, &f.alarm, a, b),
+        );
     }
 
     fn draw_voltage_table(&self, area: Rect, buf: &mut Buffer, block: Block<'_>) {
-        let voltages = &self.data.volts;
-        if voltages.is_empty() {
-            draw_empty_panel(block, area, buf);
-            return;
-        }
-
-        let inner = block.inner(area);
-        Widget::render(block, area, buf);
-
-        enum Entry<'b> {
-            Blank,
-            ChipLabel(&'b str),
-            Sensor(&'b sensors::Voltage),
-            CombinedSensor(&'b sensors::Voltage),
-        }
-
-        let mut entries: Vec<Entry> = vec![];
-        let mut last_chip: Option<&str> = None;
-        let mut prev_was_sensor = false;
-        let mut iter = voltages.iter().peekable();
-        while let Some(volt) = iter.next() {
-            let new_chip = last_chip != Some(volt.chip_id.as_str());
-            if new_chip {
-                if last_chip.is_some() {
-                    entries.push(Entry::Blank);
-                }
-                last_chip = Some(&volt.chip_id);
-                let next_same_chip = iter.peek().map_or(false, |n| n.chip_id == volt.chip_id);
-                if !next_same_chip {
-                    entries.push(Entry::CombinedSensor(volt));
-                    prev_was_sensor = true;
-                    continue;
-                }
-                entries.push(Entry::ChipLabel(&volt.chip_label));
-            } else if prev_was_sensor {
-                entries.push(Entry::Blank);
-            }
-            entries.push(Entry::Sensor(volt));
-            prev_was_sensor = true;
-        }
-
-        let constraints: Vec<Constraint> = entries.iter().map(|_| Length(1)).collect();
-        let row_areas = Layout::vertical(constraints).split(inner);
-
-        for (entry, &row_area) in entries.iter().zip(row_areas.iter()) {
-            match entry {
-                Entry::Blank => {}
-                Entry::ChipLabel(label) => render_chip_label(label, row_area, buf),
-                Entry::Sensor(v) => render_volt_row(
-                    &v.sensor_label,
-                    &v.value,
-                    &v.min,
-                    &v.max,
-                    row_area,
-                    buf,
-                ),
-                Entry::CombinedSensor(v) => render_volt_combined_row(
-                    &v.chip_label,
-                    &v.value,
-                    &v.min,
-                    &v.max,
-                    row_area,
-                    buf,
-                ),
-            }
-        }
+        render_sensor_panel(
+            &self.data.volts,
+            area,
+            buf,
+            block,
+            |v, a, b| render_volt_row(&v.sensor_label, &v.value, &v.min, &v.max, a, b),
+            |v, a, b| render_volt_combined_row(&v.chip_label, &v.value, &v.min, &v.max, a, b),
+        );
     }
 }

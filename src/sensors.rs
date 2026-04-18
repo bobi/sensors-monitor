@@ -1,8 +1,7 @@
 use crate::config::SmConfig;
-use regex::Regex;
+use color_eyre::eyre::bail;
 use serde::Deserialize;
 use serde_json::Value;
-use std::collections::HashMap;
 use std::io::ErrorKind;
 use std::process::Command;
 
@@ -67,19 +66,15 @@ pub struct SensorsData {
 }
 
 fn get_chip_order(chip_id: &str) -> i32 {
-    let chip_sort_order = [
-        (Regex::new("^coretemp-.*").unwrap(), 1),
-        (Regex::new("^drivetemp-.*").unwrap(), 2),
-        (Regex::new("^acpitz-.*").unwrap(), 3),
-    ];
-
-    for (key, value) in &chip_sort_order {
-        if key.is_match(chip_id) {
-            return *value;
-        }
+    if chip_id.starts_with("coretemp-") {
+        1
+    } else if chip_id.starts_with("drivetemp-") {
+        2
+    } else if chip_id.starts_with("acpitz-") {
+        3
+    } else {
+        i32::MAX - 1
     }
-
-    i32::MAX - 1
 }
 
 fn get_custom_chip_label(chip_id: &str, config: &SmConfig) -> String {
@@ -143,29 +138,27 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
                             continue;
                         }
 
-                        let mut temps: HashMap<String, Temp> = HashMap::new();
-                        let mut hdd_temps: HashMap<String, HddTemp> = HashMap::new();
-                        let mut volts: HashMap<String, Voltage> = HashMap::new();
-                        let mut fans: HashMap<String, FanSpeed> = HashMap::new();
+                        let mut temp: Option<Temp> = None;
+                        let mut hdd_temp: Option<HddTemp> = None;
+                        let mut volt: Option<Voltage> = None;
+                        let mut fan: Option<FanSpeed> = None;
 
                         for (name, value) in sensor_values {
-                            let value = value.as_f64().unwrap();
+                            let Some(value) = value.as_f64() else { continue };
+
                             if name.starts_with("temp") {
                                 if chip_id.starts_with("drivetemp") || chip_id.starts_with("nvme") {
-                                    let entry =
-                                        hdd_temps.entry(sensor_id.clone()).or_insert(HddTemp {
-                                            chip_id: chip_id.clone(),
-                                            chip_label: get_custom_chip_label(chip_id, config),
-                                            sensor_label: get_custom_sensor_label(
-                                                chip_id, sensor_id, config,
-                                            ),
-                                            chip_order: get_chip_order(chip_id),
-                                            value: None,
-                                            high: None,
-                                            critical: None,
-                                            lowest: None,
-                                            highest: None,
-                                        });
+                                    let entry = hdd_temp.get_or_insert_with(|| HddTemp {
+                                        chip_id: chip_id.clone(),
+                                        chip_label: get_custom_chip_label(chip_id, config),
+                                        sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
+                                        chip_order: get_chip_order(chip_id),
+                                        value: None,
+                                        high: None,
+                                        critical: None,
+                                        lowest: None,
+                                        highest: None,
+                                    });
                                     if name.ends_with("_input") {
                                         entry.value = Some(value);
                                     } else if name.ends_with("_max") && value <= 150.0 {
@@ -178,12 +171,10 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
                                         entry.highest = Some(value);
                                     }
                                 } else {
-                                    let entry = temps.entry(sensor_id.clone()).or_insert(Temp {
+                                    let entry = temp.get_or_insert_with(|| Temp {
                                         chip_id: chip_id.clone(),
                                         chip_label: get_custom_chip_label(chip_id, config),
-                                        sensor_label: get_custom_sensor_label(
-                                            chip_id, sensor_id, config,
-                                        ),
+                                        sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
                                         chip_order: get_chip_order(chip_id),
                                         value: None,
                                         high: None,
@@ -198,12 +189,10 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
                                     }
                                 }
                             } else if name.starts_with("fan") {
-                                let entry = fans.entry(sensor_id.clone()).or_insert(FanSpeed {
+                                let entry = fan.get_or_insert_with(|| FanSpeed {
                                     chip_id: chip_id.clone(),
                                     chip_label: get_custom_chip_label(chip_id, config),
-                                    sensor_label: get_custom_sensor_label(
-                                        chip_id, sensor_id, config,
-                                    ),
+                                    sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
                                     chip_order: get_chip_order(chip_id),
                                     value: None,
                                     min: None,
@@ -217,12 +206,10 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
                                     entry.alarm = Some(value != 0.0);
                                 }
                             } else if name.starts_with("in") {
-                                let entry = volts.entry(sensor_id.clone()).or_insert(Voltage {
+                                let entry = volt.get_or_insert_with(|| Voltage {
                                     chip_id: chip_id.clone(),
                                     chip_label: get_custom_chip_label(chip_id, config),
-                                    sensor_label: get_custom_sensor_label(
-                                        chip_id, sensor_id, config,
-                                    ),
+                                    sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
                                     chip_order: get_chip_order(chip_id),
                                     value: None,
                                     min: None,
@@ -237,10 +224,11 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
                                 }
                             }
                         }
-                        output.temps.extend(temps.into_values());
-                        output.hdd_temps.extend(hdd_temps.into_values());
-                        output.volts.extend(volts.into_values());
-                        output.fans.extend(fans.into_values());
+
+                        output.temps.extend(temp);
+                        output.hdd_temps.extend(hdd_temp);
+                        output.volts.extend(volt);
+                        output.fans.extend(fan);
                     }
                 }
             }
@@ -257,7 +245,7 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
 
 fn get_sensors_data_from_command(
     lm_sensors_config: &Option<String>,
-) -> Result<Value, Box<dyn std::error::Error>> {
+) -> color_eyre::Result<Value> {
     let output = match Command::new("sensors")
         .args([
             "-c",
@@ -270,21 +258,21 @@ fn get_sensors_data_from_command(
     {
         Ok(output) => output,
         Err(e) => {
-            return if e.kind() == ErrorKind::NotFound {
-                Err("The `sensors` command was not found. Please make sure `lm-sensors` is installed and in your PATH.".into())
+            if e.kind() == ErrorKind::NotFound {
+                bail!("The `sensors` command was not found. Please make sure `lm-sensors` is installed and in your PATH.");
             } else {
-                Err(e.into())
+                return Err(e.into());
             }
         }
     };
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!(
+        bail!(
             "Failed to execute `sensors` command. Exit code: {}. Stderr: {}",
-            output.status, stderr
-        )
-        .into());
+            output.status,
+            stderr
+        );
     }
 
     let stdout = String::from_utf8(output.stdout)?;
@@ -292,7 +280,7 @@ fn get_sensors_data_from_command(
     Ok(data)
 }
 
-fn get_sensors_data_from_file(path: &str) -> Result<Value, Box<dyn std::error::Error>> {
+fn get_sensors_data_from_file(path: &str) -> color_eyre::Result<Value> {
     let content = std::fs::read_to_string(path)?;
     let data: Value = serde_json::from_str(&content)?;
     Ok(data)
@@ -302,14 +290,12 @@ pub fn get_data(
     lm_sensors_config: &Option<String>,
     lm_sensors_json: &Option<String>,
     config: &SmConfig,
-) -> Result<SensorsData, Box<dyn std::error::Error>> {
+) -> color_eyre::Result<SensorsData> {
     let raw_sensor_data = if let Some(path) = lm_sensors_json {
         get_sensors_data_from_file(path)?
     } else {
         get_sensors_data_from_command(lm_sensors_config)?
     };
 
-    let sensor_data = parse_sensors_json(&raw_sensor_data, config);
-
-    Ok(sensor_data)
+    Ok(parse_sensors_json(&raw_sensor_data, config))
 }

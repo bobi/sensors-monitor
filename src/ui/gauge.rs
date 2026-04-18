@@ -6,7 +6,6 @@ pub struct BlockGauge<'a> {
     block: Option<Block<'a>>,
     ratio: f64,
     label: Option<Line<'a>>,
-    use_unicode: bool,
     style: Style,
     gauge_style: Style,
 }
@@ -27,7 +26,6 @@ impl<'a> BlockGauge<'a> {
         self.gauge_style = style.into();
         self
     }
-
 }
 
 impl Widget for BlockGauge<'_> {
@@ -53,11 +51,7 @@ impl BlockGauge<'_> {
         let label_row = gauge_area.top() + gauge_area.height / 2;
 
         let filled_width = f64::from(gauge_area.width) * self.ratio;
-        let end = if self.use_unicode {
-            gauge_area.left() + filled_width.floor() as u16
-        } else {
-            gauge_area.left() + filled_width.round() as u16
-        };
+        let end = gauge_area.left() + filled_width.round() as u16;
 
         for y in gauge_area.top()..gauge_area.bottom() {
             for x in gauge_area.left()..end {
@@ -65,7 +59,6 @@ impl BlockGauge<'_> {
                     y == label_row && x >= label_col && x < label_col + clamped_label_width;
                 if let Some(cell) = buf.cell_mut(Position::new(x, y)) {
                     if in_label {
-                        // Invert fg/bg so the label is readable on the filled bar
                         cell.set_symbol(" ")
                             .set_fg(self.gauge_style.bg.unwrap_or(Color::Reset))
                             .set_bg(self.gauge_style.fg.unwrap_or(Color::Reset));
@@ -76,27 +69,8 @@ impl BlockGauge<'_> {
                     }
                 }
             }
-            if self.use_unicode && self.ratio < 1.0 {
-                if let Some(cell) = buf.cell_mut(Position::new(end, y)) {
-                    cell.set_symbol(unicode_block(filled_width % 1.0));
-                }
-            }
         }
 
         buf.set_line(label_col, label_row, label, clamped_label_width);
-    }
-}
-
-fn unicode_block(frac: f64) -> &'static str {
-    match (frac * 8.0).round() as u16 {
-        1 => symbols::block::ONE_EIGHTH,
-        2 => symbols::block::ONE_QUARTER,
-        3 => symbols::block::THREE_EIGHTHS,
-        4 => symbols::block::HALF,
-        5 => symbols::block::FIVE_EIGHTHS,
-        6 => symbols::block::THREE_QUARTERS,
-        7 => symbols::block::SEVEN_EIGHTHS,
-        8 => symbols::block::FULL,
-        _ => " ",
     }
 }

@@ -80,7 +80,7 @@ impl<'a> App<'a> {
             }
 
             terminal.draw(|f| {
-                f.render_widget(ui::SmUi::new(&sensor_data, &self.refresh_rate), f.area())
+                f.render_widget(ui::SmUi::new(&sensor_data, self.refresh_rate), f.area())
             })?;
 
             let timeout = TICK_RATE.saturating_sub(last_tick.elapsed());

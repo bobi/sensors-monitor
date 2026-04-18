@@ -55,7 +55,7 @@ pub struct FanSpeed {
     pub alarm: Option<bool>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct SensorsData {
     pub volts: Vec<Voltage>,
     pub temps: Vec<Temp>,
@@ -108,8 +108,7 @@ fn is_sensor_visible(chip_id: &str, sensor_id: &str, config: &SmConfig) -> bool 
         .get(chip_id)
         .and_then(|chip_config| chip_config.get("hidden_sensoers"))
     {
-        let hidden_sensors: Vec<&str> = hidden_sensors_str.split(',').collect();
-        if hidden_sensors.contains(&sensor_id) {
+        if hidden_sensors_str.split(',').any(|h| h == sensor_id) {
             return false;
         }
     }
@@ -117,12 +116,7 @@ fn is_sensor_visible(chip_id: &str, sensor_id: &str, config: &SmConfig) -> bool 
 }
 
 fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
-    let mut output = SensorsData {
-        volts: vec![],
-        temps: vec![],
-        hdd_temps: vec![],
-        fans: vec![],
-    };
+    let mut output = SensorsData::default();
 
     let Value::Object(sensors_json) = sensors_json else { return output };
 
@@ -161,7 +155,7 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
                         });
                         if name.ends_with("_input") {
                             entry.value = Some(value);
-                        } else if name.ends_with("_max") && value <= 150.0 {
+                        } else if name.ends_with("_max") && value <= 150.0 { // lm_sensors sometimes reports unrealistic max values; cap at 150°C
                             entry.high = Some(value);
                         } else if name.ends_with("_crit") {
                             entry.critical = Some(value);

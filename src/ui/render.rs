@@ -1,7 +1,7 @@
 use ratatui::{
     layout::Constraint::{Fill, Min},
     prelude::*,
-    widgets::{Block, Paragraph, Widget},
+    widgets::{Block, Paragraph},
 };
 use super::format::{fmt_rpm, fmt_temp, fmt_volts, temp_color};
 use super::gauge::BlockGauge;
@@ -14,12 +14,8 @@ fn row_cols(area: Rect) -> [Rect; 2] {
         .areas(area)
 }
 
-fn render_text<'a>(text: impl Into<Text<'a>>, area: Rect, buf: &mut Buffer) {
-    Widget::render(Paragraph::new(text), area, buf);
-}
-
 pub(super) fn render_chip_label(label: &str, area: Rect, buf: &mut Buffer) {
-    render_text(label.fg(Color::White).bold(), area, buf);
+    Paragraph::new(label.fg(Color::White).bold()).render(area, buf);
 }
 
 pub(super) fn render_temp_row(
@@ -35,7 +31,7 @@ pub(super) fn render_temp_row(
     let high_val = high.unwrap_or(100.0);
     let color = temp_color(temp_val, high_val);
 
-    render_text(format!("  {}", label).fg(Color::LightBlue), label_a, buf);
+    Paragraph::new(format!("  {}", label).fg(Color::LightBlue)).render(label_a, buf);
 
     let ratio = (temp_val / high_val).clamp(0.0, 1.0);
 
@@ -65,7 +61,7 @@ pub(super) fn render_hdd_row<'a>(
     buf: &mut Buffer,
 ) {
     let [label_a, gauge_a] = row_cols(area);
-    render_text(label, label_a, buf);
+    Paragraph::new(label).render(label_a, buf);
 
     let temp_val = value.unwrap_or(0.0);
     let high_val = high.unwrap_or(100.0);
@@ -96,7 +92,7 @@ pub(super) fn render_fan_row<'a>(
     buf: &mut Buffer,
 ) {
     let [label_a, value_a] = row_cols(area);
-    render_text(label, label_a, buf);
+    Paragraph::new(label).render(label_a, buf);
     render_fan_value(value, min, alarm, value_a, buf);
 }
 
@@ -112,7 +108,7 @@ fn render_fan_value(
     if let Some(m) = min {
         spans.push(format!("  (min: {})", fmt_rpm(*m)).fg(Color::Gray));
     }
-    render_text(Line::from(spans), area, buf);
+    Paragraph::new(Line::from(spans)).render(area, buf);
 }
 
 pub(super) fn render_volt_row<'a>(
@@ -124,7 +120,7 @@ pub(super) fn render_volt_row<'a>(
     buf: &mut Buffer,
 ) {
     let [label_a, value_a] = row_cols(area);
-    render_text(label, label_a, buf);
+    Paragraph::new(label).render(label_a, buf);
     render_volt_value(value, min, max, value_a, buf);
 }
 
@@ -147,15 +143,13 @@ fn render_volt_value(
     if let (Some(lo), Some(hi)) = (*min, *max) {
         spans.push(format!("  ({} – {})", fmt_volts(lo), fmt_volts(hi)).fg(Color::Gray));
     }
-    render_text(Line::from(spans), area, buf);
+    Paragraph::new(Line::from(spans)).render(area, buf);
 }
 
 pub(super) fn draw_empty_panel(block: Block<'_>, area: Rect, buf: &mut Buffer) {
     let inner = block.inner(area);
-    Widget::render(block, area, buf);
-    Widget::render(
-        Paragraph::new(Line::from("No data").fg(Color::DarkGray)).alignment(Alignment::Center),
-        inner,
-        buf,
-    );
+    block.render(area, buf);
+    Paragraph::new(Line::from("No data").fg(Color::DarkGray))
+        .alignment(Alignment::Center)
+        .render(inner, buf);
 }

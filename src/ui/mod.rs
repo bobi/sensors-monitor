@@ -98,7 +98,7 @@ fn render_sensor_panel<T: SensorItem>(
 #[derive(Debug, Clone)]
 pub struct SmUi<'a> {
     data: &'a sensors::SensorsData,
-    refresh_rate: &'a Duration,
+    refresh_rate: Duration,
 }
 
 impl<'a> Widget for SmUi<'a> {
@@ -158,7 +158,7 @@ impl<'a> Widget for SmUi<'a> {
 // ── SmUi methods ───────────────────────────────────────────────────────────────
 
 impl<'a> SmUi<'a> {
-    pub fn new(data: &'a sensors::SensorsData, refresh_rate: &'a Duration) -> Self {
+    pub fn new(data: &'a sensors::SensorsData, refresh_rate: Duration) -> Self {
         SmUi { data, refresh_rate }
     }
 
@@ -171,7 +171,7 @@ impl<'a> SmUi<'a> {
 
         Widget::render(
             Paragraph::new(Line::from(vec![
-                format!(" {}  refresh: {}  ", time_str, format_duration(*self.refresh_rate))
+                format!(" {}  refresh: {}  ", time_str, format_duration(self.refresh_rate))
                     .fg(Color::Gray),
                 "q: quit".fg(Color::DarkGray),
             ])),

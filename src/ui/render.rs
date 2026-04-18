@@ -103,8 +103,12 @@ fn render_fan_value(
     area: Rect,
     buf: &mut Buffer,
 ) {
-    let color = if alarm.unwrap_or(false) { Color::Red } else { Color::LightGreen };
+    let alarming = alarm.unwrap_or(false);
+    let color = if alarming { Color::Red } else { Color::Green };
     let mut spans = vec![value.map(fmt_rpm).unwrap_or_default().fg(color).bold()];
+    if alarming {
+        spans.push(" !".fg(Color::Red).bold());
+    }
     if let Some(m) = min {
         spans.push(format!("  (min: {})", fmt_rpm(*m)).fg(Color::Gray));
     }
@@ -137,7 +141,7 @@ fn render_volt_value(
     } else if val > max.unwrap_or(f64::INFINITY) {
         Color::Red
     } else {
-        Color::LightGreen
+        Color::Green
     };
     let mut spans = vec![fmt_volts(val).fg(color).bold()];
     if let (Some(lo), Some(hi)) = (*min, *max) {

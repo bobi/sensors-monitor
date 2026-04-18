@@ -44,20 +44,24 @@ pub fn load_config(config_file: &str) -> Result<SmConfig, ConfigError> {
 
     let mut sm_config = SmConfig::default();
 
-    if let Ok(config_table) = config.collect() {
-        for (key, value) in config_table {
-            if key == DEFAULTS_SECTION {
-                if let Ok(defaults) = value.try_deserialize::<SmConfigDefaults>() {
-                    sm_config.defaults = defaults;
+    match config.collect() {
+        Ok(config_table) => {
+            for (key, value) in config_table {
+                if key == DEFAULTS_SECTION {
+                    match value.try_deserialize::<SmConfigDefaults>() {
+                        Ok(defaults) => sm_config.defaults = defaults,
+                        Err(e) => eprintln!("Warning: failed to parse [defaults] config section: {e}"),
+                    }
+                } else if let Ok(section_table) = value.into_table() {
+                    let mut section = HashMap::new();
+                    for (sub_key, sub_value) in section_table {
+                        section.insert(sub_key, sub_value.into_string().unwrap_or_default());
+                    }
+                    sm_config.sensors.insert(key, section);
                 }
-            } else if let Ok(section_table) = value.into_table() {
-                let mut section = HashMap::new();
-                for (sub_key, sub_value) in section_table {
-                    section.insert(sub_key, sub_value.into_string().unwrap_or_default());
-                }
-                sm_config.sensors.insert(key, section);
             }
         }
+        Err(e) => eprintln!("Warning: failed to read config: {e}"),
     }
 
     Ok(sm_config)

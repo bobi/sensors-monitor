@@ -116,15 +116,11 @@ fn is_chip_visible(chip_id: &str, config: &SmConfig) -> bool {
 }
 
 fn is_sensor_visible(chip_id: &str, sensor_id: &str, config: &SmConfig) -> bool {
-    if config
+    !config
         .sensors
         .get(chip_id)
         .and_then(|c| c.get("hidden_sensoers"))
         .is_some_and(|hidden| hidden.split(',').any(|h| h == sensor_id))
-    {
-        return false;
-    }
-    true
 }
 
 fn parse_temp_sensor(
@@ -274,10 +270,10 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
         }
     }
 
-    output.temps.sort_by_key(|item| item.chip_order);
-    output.hdd_temps.sort_by_key(|item| item.chip_order);
-    output.volts.sort_by_key(|item| item.chip_order);
-    output.fans.sort_by_key(|item| item.chip_order);
+    output.temps.sort_by(|a, b| a.chip_order.cmp(&b.chip_order).then_with(|| a.chip_id.cmp(&b.chip_id)));
+    output.hdd_temps.sort_by(|a, b| a.chip_order.cmp(&b.chip_order).then_with(|| a.chip_id.cmp(&b.chip_id)));
+    output.volts.sort_by(|a, b| a.chip_order.cmp(&b.chip_order).then_with(|| a.chip_id.cmp(&b.chip_id)));
+    output.fans.sort_by(|a, b| a.chip_order.cmp(&b.chip_order).then_with(|| a.chip_id.cmp(&b.chip_id)));
 
     output
 }

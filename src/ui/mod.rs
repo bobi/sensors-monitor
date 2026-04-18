@@ -104,6 +104,7 @@ fn render_sensor_panel<T: SensorItem>(
 pub struct SmUi<'a> {
     data: &'a sensors::SensorsData,
     refresh_rate: Duration,
+    error: Option<&'a str>,
 }
 
 impl<'a> Widget for SmUi<'a> {
@@ -164,7 +165,12 @@ impl<'a> Widget for SmUi<'a> {
 
 impl<'a> SmUi<'a> {
     pub fn new(data: &'a sensors::SensorsData, refresh_rate: Duration) -> Self {
-        SmUi { data, refresh_rate }
+        SmUi { data, refresh_rate, error: None }
+    }
+
+    pub fn with_error(mut self, error: &'a str) -> Self {
+        self.error = Some(error);
+        self
     }
 
     fn draw_status_bar(&self, area: Rect, buf: &mut Buffer) {
@@ -174,15 +180,15 @@ impl<'a> SmUi<'a> {
         )
         .expect("Could not format time");
 
-        Widget::render(
-            Paragraph::new(Line::from(vec![
-                format!(" {}  refresh: {}  ", time_str, format_duration(self.refresh_rate))
-                    .fg(Color::Gray),
-                "q: quit".fg(Color::DarkGray),
-            ])),
-            area,
-            buf,
-        );
+        let mut spans = vec![
+            format!(" {}  refresh: {}  ", time_str, format_duration(self.refresh_rate)).fg(Color::Gray),
+            "q: quit".fg(Color::DarkGray),
+        ];
+        if let Some(err) = self.error {
+            spans.push(format!("  Error: {err}").fg(Color::Red).bold());
+        }
+
+        Widget::render(Paragraph::new(Line::from(spans)), area, buf);
     }
 
     fn draw_system_temperatures(&self, area: Rect, buf: &mut Buffer, block: Block<'_>) {

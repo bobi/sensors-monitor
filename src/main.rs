@@ -53,19 +53,30 @@ impl<'a> App<'a> {
         let mut last_tick = Instant::now();
         let mut last_refresh = Instant::now() - self.refresh_rate;
         let mut sensor_data = sensors::SensorsData::default();
+        let mut last_error: Option<String> = None;
 
         while self.is_running() {
             if last_refresh.elapsed() >= self.refresh_rate {
-                sensor_data = sensors::get_data(
+                match sensors::get_data(
                     self.lm_sensors_config.as_deref(),
                     self.lm_sensors_json.as_deref(),
                     self.config,
-                )?;
+                ) {
+                    Ok(data) => {
+                        sensor_data = data;
+                        last_error = None;
+                    }
+                    Err(e) => last_error = Some(format!("{e:#}")),
+                }
                 last_refresh = Instant::now();
             }
 
             terminal.draw(|f| {
-                f.render_widget(ui::SmUi::new(&sensor_data, self.refresh_rate), f.area())
+                let mut widget = ui::SmUi::new(&sensor_data, self.refresh_rate);
+                if let Some(ref err) = last_error {
+                    widget = widget.with_error(err);
+                }
+                f.render_widget(widget, f.area())
             })?;
 
             let timeout = TICK_RATE.saturating_sub(last_tick.elapsed());

@@ -2,6 +2,6 @@ version: 2
 updates:
   - package-ecosystem: "cargo"
     directory: "/"
-    target-branch: "master"
+    target-branch: "dev"
     schedule:
       interval: "weekly"

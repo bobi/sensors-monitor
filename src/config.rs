@@ -14,19 +14,10 @@ fn default_refresh() -> u64 {
     2000
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SmConfig {
     pub defaults: SmConfigDefaults,
     pub sensors: HashMap<String, HashMap<String, String>>,
-}
-
-impl Default for SmConfig {
-    fn default() -> Self {
-        Self {
-            defaults: Default::default(),
-            sensors: Default::default(),
-        }
-    }
 }
 
 impl Default for SmConfigDefaults {
@@ -58,10 +49,7 @@ pub fn load_config(config_file: &Option<String>) -> Result<SmConfig, ConfigError
         .add_source(Environment::with_prefix("SM_"))
         .build()?;
 
-    let mut sm_config: SmConfig = SmConfig {
-        defaults: Default::default(),
-        sensors: Default::default(),
-    };
+    let mut sm_config = SmConfig::default();
 
     if let Ok(config_table) = config.collect() {
         let mut sections = HashMap::new();
@@ -70,14 +58,12 @@ pub fn load_config(config_file: &Option<String>) -> Result<SmConfig, ConfigError
                 if let Ok(defaults) = value.try_deserialize::<SmConfigDefaults>() {
                     sm_config.defaults = defaults;
                 }
-            } else {
-                if let Ok(section_table) = value.into_table() {
-                    let mut section = HashMap::new();
-                    for (sub_key, sub_value) in section_table {
-                        section.insert(sub_key, sub_value.into_string().unwrap_or_default());
-                    }
-                    sections.insert(key, section);
+            } else if let Ok(section_table) = value.into_table() {
+                let mut section = HashMap::new();
+                for (sub_key, sub_value) in section_table {
+                    section.insert(sub_key, sub_value.into_string().unwrap_or_default());
                 }
+                sections.insert(key, section);
             }
         }
         sm_config.sensors = sections;

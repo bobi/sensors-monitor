@@ -6,6 +6,7 @@ use std::io::ErrorKind;
 use std::process::Command;
 
 const NULL_DEVICE: &str = "/dev/null";
+// some drives report unrealistically high "max" values that would break the gauge scale
 const DRIVE_TEMP_MAX_CAP: f64 = 150.0;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -123,42 +124,42 @@ fn is_sensor_visible(chip_id: &str, sensor_id: &str, config: &SmConfig) -> bool 
         .is_some_and(|hidden| hidden.split(',').any(|h| h == sensor_id))
 }
 
-fn parse_temp_sensor(
-    chip_id: &str,
-    sensor_id: &str,
+fn parse_sensor_fields<T>(
     fields: &Map<String, Value>,
-    config: &SmConfig,
-) -> Option<Temp> {
-    let mut entry: Option<Temp> = None;
+    make: impl Fn() -> T,
+    mut assign: impl FnMut(&mut T, &str, f64),
+) -> Option<T> {
+    let mut entry: Option<T> = None;
     for (name, value) in fields {
         let Some(v) = value.as_f64() else { continue };
-        let e = entry.get_or_insert_with(|| Temp {
+        let e = entry.get_or_insert_with(&make);
+        assign(e, name, v);
+    }
+    entry
+}
+
+fn parse_temp_sensor(chip_id: &str, sensor_id: &str, fields: &Map<String, Value>, config: &SmConfig) -> Option<Temp> {
+    parse_sensor_fields(
+        fields,
+        || Temp {
             chip_id: chip_id.to_string(),
             chip_label: get_custom_chip_label(chip_id, config),
             sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
             chip_order: get_chip_order(chip_id),
             value: None,
             high: None,
-        });
-        if name.ends_with("_input") {
-            e.value = Some(v);
-        } else if name.ends_with("_max") {
-            e.high = Some(v);
-        }
-    }
-    entry
+        },
+        |e, name, v| {
+            if name.ends_with("_input") { e.value = Some(v); }
+            else if name.ends_with("_max") { e.high = Some(v); }
+        },
+    )
 }
 
-fn parse_hdd_sensor(
-    chip_id: &str,
-    sensor_id: &str,
-    fields: &Map<String, Value>,
-    config: &SmConfig,
-) -> Option<HddTemp> {
-    let mut entry: Option<HddTemp> = None;
-    for (name, value) in fields {
-        let Some(v) = value.as_f64() else { continue };
-        let e = entry.get_or_insert_with(|| HddTemp {
+fn parse_hdd_sensor(chip_id: &str, sensor_id: &str, fields: &Map<String, Value>, config: &SmConfig) -> Option<HddTemp> {
+    parse_sensor_fields(
+        fields,
+        || HddTemp {
             chip_id: chip_id.to_string(),
             chip_label: get_custom_chip_label(chip_id, config),
             sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
@@ -167,30 +168,20 @@ fn parse_hdd_sensor(
             high: None,
             lowest: None,
             highest: None,
-        });
-        if name.ends_with("_input") {
-            e.value = Some(v);
-        } else if name.ends_with("_max") && v <= DRIVE_TEMP_MAX_CAP {
-            e.high = Some(v);
-        } else if name.ends_with("_lowest") {
-            e.lowest = Some(v);
-        } else if name.ends_with("_highest") {
-            e.highest = Some(v);
-        }
-    }
-    entry
+        },
+        |e, name, v| {
+            if name.ends_with("_input") { e.value = Some(v); }
+            else if name.ends_with("_max") && v <= DRIVE_TEMP_MAX_CAP { e.high = Some(v); }
+            else if name.ends_with("_lowest") { e.lowest = Some(v); }
+            else if name.ends_with("_highest") { e.highest = Some(v); }
+        },
+    )
 }
 
-fn parse_fan_sensor(
-    chip_id: &str,
-    sensor_id: &str,
-    fields: &Map<String, Value>,
-    config: &SmConfig,
-) -> Option<FanSpeed> {
-    let mut entry: Option<FanSpeed> = None;
-    for (name, value) in fields {
-        let Some(v) = value.as_f64() else { continue };
-        let e = entry.get_or_insert_with(|| FanSpeed {
+fn parse_fan_sensor(chip_id: &str, sensor_id: &str, fields: &Map<String, Value>, config: &SmConfig) -> Option<FanSpeed> {
+    parse_sensor_fields(
+        fields,
+        || FanSpeed {
             chip_id: chip_id.to_string(),
             chip_label: get_custom_chip_label(chip_id, config),
             sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
@@ -198,28 +189,19 @@ fn parse_fan_sensor(
             value: None,
             min: None,
             alarm: None,
-        });
-        if name.ends_with("_input") {
-            e.value = Some(v);
-        } else if name.ends_with("_min") {
-            e.min = Some(v);
-        } else if name.ends_with("_alarm") {
-            e.alarm = Some(v != 0.0);
-        }
-    }
-    entry
+        },
+        |e, name, v| {
+            if name.ends_with("_input") { e.value = Some(v); }
+            else if name.ends_with("_min") { e.min = Some(v); }
+            else if name.ends_with("_alarm") { e.alarm = Some(v != 0.0); }
+        },
+    )
 }
 
-fn parse_volt_sensor(
-    chip_id: &str,
-    sensor_id: &str,
-    fields: &Map<String, Value>,
-    config: &SmConfig,
-) -> Option<Voltage> {
-    let mut entry: Option<Voltage> = None;
-    for (name, value) in fields {
-        let Some(v) = value.as_f64() else { continue };
-        let e = entry.get_or_insert_with(|| Voltage {
+fn parse_volt_sensor(chip_id: &str, sensor_id: &str, fields: &Map<String, Value>, config: &SmConfig) -> Option<Voltage> {
+    parse_sensor_fields(
+        fields,
+        || Voltage {
             chip_id: chip_id.to_string(),
             chip_label: get_custom_chip_label(chip_id, config),
             sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
@@ -227,16 +209,13 @@ fn parse_volt_sensor(
             value: None,
             min: None,
             max: None,
-        });
-        if name.ends_with("_input") {
-            e.value = Some(v);
-        } else if name.ends_with("_min") {
-            e.min = Some(v);
-        } else if name.ends_with("_max") {
-            e.max = Some(v);
-        }
-    }
-    entry
+        },
+        |e, name, v| {
+            if name.ends_with("_input") { e.value = Some(v); }
+            else if name.ends_with("_min") { e.min = Some(v); }
+            else if name.ends_with("_max") { e.max = Some(v); }
+        },
+    )
 }
 
 fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
@@ -270,10 +249,15 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
         }
     }
 
-    output.temps.sort_by(|a, b| a.chip_order.cmp(&b.chip_order).then_with(|| a.chip_id.cmp(&b.chip_id)));
-    output.hdd_temps.sort_by(|a, b| a.chip_order.cmp(&b.chip_order).then_with(|| a.chip_id.cmp(&b.chip_id)));
-    output.volts.sort_by(|a, b| a.chip_order.cmp(&b.chip_order).then_with(|| a.chip_id.cmp(&b.chip_id)));
-    output.fans.sort_by(|a, b| a.chip_order.cmp(&b.chip_order).then_with(|| a.chip_id.cmp(&b.chip_id)));
+    macro_rules! sort_by_chip {
+        ($v:expr) => {
+            $v.sort_by(|a, b| a.chip_order.cmp(&b.chip_order).then_with(|| a.chip_id.cmp(&b.chip_id)));
+        };
+    }
+    sort_by_chip!(output.temps);
+    sort_by_chip!(output.hdd_temps);
+    sort_by_chip!(output.volts);
+    sort_by_chip!(output.fans);
 
     output
 }

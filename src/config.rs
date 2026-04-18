@@ -32,7 +32,7 @@ impl Default for SmConfigDefaults {
 
 const DEFAULTS_SECTION: &str = "defaults";
 
-pub fn load_config(config_file: &str) -> Result<SmConfig, ConfigError> {
+pub fn load_config(config_file: &str) -> Result<(SmConfig, Vec<String>), ConfigError> {
     let config = Config::builder()
         .add_source(
             File::with_name(config_file)
@@ -43,6 +43,7 @@ pub fn load_config(config_file: &str) -> Result<SmConfig, ConfigError> {
         .build()?;
 
     let mut sm_config = SmConfig::default();
+    let mut warnings: Vec<String> = Vec::new();
 
     match config.collect() {
         Ok(config_table) => {
@@ -50,7 +51,7 @@ pub fn load_config(config_file: &str) -> Result<SmConfig, ConfigError> {
                 if key == DEFAULTS_SECTION {
                     match value.try_deserialize::<SmConfigDefaults>() {
                         Ok(defaults) => sm_config.defaults = defaults,
-                        Err(e) => eprintln!("Warning: failed to parse [defaults] config section: {e}"),
+                        Err(e) => warnings.push(format!("Failed to parse [defaults] section: {e}")),
                     }
                 } else if let Ok(section_table) = value.into_table() {
                     let mut section = HashMap::new();
@@ -61,8 +62,8 @@ pub fn load_config(config_file: &str) -> Result<SmConfig, ConfigError> {
                 }
             }
         }
-        Err(e) => eprintln!("Warning: failed to read config: {e}"),
+        Err(e) => warnings.push(format!("Failed to read config: {e}")),
     }
 
-    Ok(sm_config)
+    Ok((sm_config, warnings))
 }

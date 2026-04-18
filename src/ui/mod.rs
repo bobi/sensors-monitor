@@ -105,6 +105,7 @@ pub struct SmUi<'a> {
     data: &'a sensors::SensorsData,
     refresh_rate: Duration,
     error: Option<&'a str>,
+    config_warnings: &'a [String],
 }
 
 impl<'a> Widget for SmUi<'a> {
@@ -165,11 +166,16 @@ impl<'a> Widget for SmUi<'a> {
 
 impl<'a> SmUi<'a> {
     pub fn new(data: &'a sensors::SensorsData, refresh_rate: Duration) -> Self {
-        SmUi { data, refresh_rate, error: None }
+        SmUi { data, refresh_rate, error: None, config_warnings: &[] }
     }
 
     pub fn with_error(mut self, error: &'a str) -> Self {
         self.error = Some(error);
+        self
+    }
+
+    pub fn with_config_warnings(mut self, warnings: &'a [String]) -> Self {
+        self.config_warnings = warnings;
         self
     }
 
@@ -184,6 +190,9 @@ impl<'a> SmUi<'a> {
             format!(" {}  refresh: {}  ", time_str, format_duration(self.refresh_rate)).fg(Color::Gray),
             "q: quit".fg(Color::DarkGray),
         ];
+        for w in self.config_warnings {
+            spans.push(format!("  Config: {w}").fg(Color::Yellow).bold());
+        }
         if let Some(err) = self.error {
             spans.push(format!("  Error: {err}").fg(Color::Red).bold());
         }

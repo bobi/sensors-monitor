@@ -57,7 +57,6 @@ fn build_sensor_entries<'a, T: SensorItem>(items: &'a [T]) -> Vec<SensorEntry<'a
             let next_same_chip = iter.peek().is_some_and(|n| n.chip_id() == item.chip_id());
             if !next_same_chip {
                 entries.push(SensorEntry::Combined(item));
-                prev_was_sensor = true;
                 continue;
             }
             entries.push(SensorEntry::ChipLabel(item.chip_label()));
@@ -208,7 +207,6 @@ impl<'a> SmUi<'a> {
 
         let mut entries: Vec<Entry> = vec![];
         let mut last_chip: Option<&str> = None;
-        let mut prev_was_sensor = false;
         for temp in temps {
             if last_chip != Some(temp.chip_id.as_str()) {
                 if last_chip.is_some() {
@@ -216,11 +214,10 @@ impl<'a> SmUi<'a> {
                 }
                 entries.push(Entry::ChipLabel(&temp.chip_label));
                 last_chip = Some(&temp.chip_id);
-            } else if prev_was_sensor {
+            } else {
                 entries.push(Entry::Blank);
             }
             entries.push(Entry::Sensor(temp));
-            prev_was_sensor = true;
         }
 
         let constraints: Vec<Constraint> = entries.iter().map(|_| Length(1)).collect();

@@ -126,112 +126,111 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
         fans: vec![],
     };
 
-    if let Value::Object(sensors_json) = sensors_json {
-        for (chip_id, chip_data) in sensors_json {
-            if !is_chip_visible(chip_id, config) {
+    let Value::Object(sensors_json) = sensors_json else { return output };
+
+    for (chip_id, chip_data) in sensors_json {
+        if !is_chip_visible(chip_id, config) {
+            continue;
+        }
+        let Value::Object(chip_data) = chip_data else { continue };
+
+        for (sensor_id, sensor_values) in chip_data {
+            let Value::Object(sensor_values) = sensor_values else { continue };
+            if !is_sensor_visible(chip_id, sensor_id, config) {
                 continue;
             }
-            if let Value::Object(chip_data) = chip_data {
-                for (sensor_id, sensor_values) in chip_data {
-                    if let Value::Object(sensor_values) = sensor_values {
-                        if !is_sensor_visible(chip_id, sensor_id, config) {
-                            continue;
+
+            let mut temp: Option<Temp> = None;
+            let mut hdd_temp: Option<HddTemp> = None;
+            let mut volt: Option<Voltage> = None;
+            let mut fan: Option<FanSpeed> = None;
+
+            for (name, value) in sensor_values {
+                let Some(value) = value.as_f64() else { continue };
+
+                if name.starts_with("temp") {
+                    if chip_id.starts_with("drivetemp") || chip_id.starts_with("nvme") {
+                        let entry = hdd_temp.get_or_insert_with(|| HddTemp {
+                            chip_id: chip_id.clone(),
+                            chip_label: get_custom_chip_label(chip_id, config),
+                            sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
+                            chip_order: get_chip_order(chip_id),
+                            value: None,
+                            high: None,
+                            critical: None,
+                            lowest: None,
+                            highest: None,
+                        });
+                        if name.ends_with("_input") {
+                            entry.value = Some(value);
+                        } else if name.ends_with("_max") && value <= 150.0 {
+                            entry.high = Some(value);
+                        } else if name.ends_with("_crit") {
+                            entry.critical = Some(value);
+                        } else if name.ends_with("_lowest") {
+                            entry.lowest = Some(value);
+                        } else if name.ends_with("_highest") {
+                            entry.highest = Some(value);
                         }
-
-                        let mut temp: Option<Temp> = None;
-                        let mut hdd_temp: Option<HddTemp> = None;
-                        let mut volt: Option<Voltage> = None;
-                        let mut fan: Option<FanSpeed> = None;
-
-                        for (name, value) in sensor_values {
-                            let Some(value) = value.as_f64() else { continue };
-
-                            if name.starts_with("temp") {
-                                if chip_id.starts_with("drivetemp") || chip_id.starts_with("nvme") {
-                                    let entry = hdd_temp.get_or_insert_with(|| HddTemp {
-                                        chip_id: chip_id.clone(),
-                                        chip_label: get_custom_chip_label(chip_id, config),
-                                        sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
-                                        chip_order: get_chip_order(chip_id),
-                                        value: None,
-                                        high: None,
-                                        critical: None,
-                                        lowest: None,
-                                        highest: None,
-                                    });
-                                    if name.ends_with("_input") {
-                                        entry.value = Some(value);
-                                    } else if name.ends_with("_max") && value <= 150.0 {
-                                        entry.high = Some(value);
-                                    } else if name.ends_with("_crit") {
-                                        entry.critical = Some(value);
-                                    } else if name.ends_with("_lowest") {
-                                        entry.lowest = Some(value);
-                                    } else if name.ends_with("_highest") {
-                                        entry.highest = Some(value);
-                                    }
-                                } else {
-                                    let entry = temp.get_or_insert_with(|| Temp {
-                                        chip_id: chip_id.clone(),
-                                        chip_label: get_custom_chip_label(chip_id, config),
-                                        sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
-                                        chip_order: get_chip_order(chip_id),
-                                        value: None,
-                                        high: None,
-                                        critical: None,
-                                    });
-                                    if name.ends_with("_input") {
-                                        entry.value = Some(value);
-                                    } else if name.ends_with("_max") {
-                                        entry.high = Some(value);
-                                    } else if name.ends_with("_crit") {
-                                        entry.critical = Some(value);
-                                    }
-                                }
-                            } else if name.starts_with("fan") {
-                                let entry = fan.get_or_insert_with(|| FanSpeed {
-                                    chip_id: chip_id.clone(),
-                                    chip_label: get_custom_chip_label(chip_id, config),
-                                    sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
-                                    chip_order: get_chip_order(chip_id),
-                                    value: None,
-                                    min: None,
-                                    alarm: None,
-                                });
-                                if name.ends_with("_input") {
-                                    entry.value = Some(value);
-                                } else if name.ends_with("_min") {
-                                    entry.min = Some(value);
-                                } else if name.ends_with("_alarm") {
-                                    entry.alarm = Some(value != 0.0);
-                                }
-                            } else if name.starts_with("in") {
-                                let entry = volt.get_or_insert_with(|| Voltage {
-                                    chip_id: chip_id.clone(),
-                                    chip_label: get_custom_chip_label(chip_id, config),
-                                    sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
-                                    chip_order: get_chip_order(chip_id),
-                                    value: None,
-                                    min: None,
-                                    max: None,
-                                });
-                                if name.ends_with("_input") {
-                                    entry.value = Some(value);
-                                } else if name.ends_with("_min") {
-                                    entry.min = Some(value);
-                                } else if name.ends_with("_max") {
-                                    entry.max = Some(value);
-                                }
-                            }
+                    } else {
+                        let entry = temp.get_or_insert_with(|| Temp {
+                            chip_id: chip_id.clone(),
+                            chip_label: get_custom_chip_label(chip_id, config),
+                            sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
+                            chip_order: get_chip_order(chip_id),
+                            value: None,
+                            high: None,
+                            critical: None,
+                        });
+                        if name.ends_with("_input") {
+                            entry.value = Some(value);
+                        } else if name.ends_with("_max") {
+                            entry.high = Some(value);
+                        } else if name.ends_with("_crit") {
+                            entry.critical = Some(value);
                         }
-
-                        output.temps.extend(temp);
-                        output.hdd_temps.extend(hdd_temp);
-                        output.volts.extend(volt);
-                        output.fans.extend(fan);
+                    }
+                } else if name.starts_with("fan") {
+                    let entry = fan.get_or_insert_with(|| FanSpeed {
+                        chip_id: chip_id.clone(),
+                        chip_label: get_custom_chip_label(chip_id, config),
+                        sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
+                        chip_order: get_chip_order(chip_id),
+                        value: None,
+                        min: None,
+                        alarm: None,
+                    });
+                    if name.ends_with("_input") {
+                        entry.value = Some(value);
+                    } else if name.ends_with("_min") {
+                        entry.min = Some(value);
+                    } else if name.ends_with("_alarm") {
+                        entry.alarm = Some(value != 0.0);
+                    }
+                } else if name.starts_with("in") {
+                    let entry = volt.get_or_insert_with(|| Voltage {
+                        chip_id: chip_id.clone(),
+                        chip_label: get_custom_chip_label(chip_id, config),
+                        sensor_label: get_custom_sensor_label(chip_id, sensor_id, config),
+                        chip_order: get_chip_order(chip_id),
+                        value: None,
+                        min: None,
+                        max: None,
+                    });
+                    if name.ends_with("_input") {
+                        entry.value = Some(value);
+                    } else if name.ends_with("_min") {
+                        entry.min = Some(value);
+                    } else if name.ends_with("_max") {
+                        entry.max = Some(value);
                     }
                 }
             }
+
+            output.temps.extend(temp);
+            output.hdd_temps.extend(hdd_temp);
+            output.volts.extend(volt);
+            output.fans.extend(fan);
         }
     }
 
@@ -243,17 +242,9 @@ fn parse_sensors_json(sensors_json: &Value, config: &SmConfig) -> SensorsData {
     output
 }
 
-fn get_sensors_data_from_command(
-    lm_sensors_config: &Option<String>,
-) -> color_eyre::Result<Value> {
+fn get_sensors_data_from_command(lm_sensors_config: Option<&str>) -> color_eyre::Result<Value> {
     let output = match Command::new("sensors")
-        .args([
-            "-c",
-            lm_sensors_config
-                .as_ref()
-                .unwrap_or(&NULL_DEVICE.to_string()),
-            "-j",
-        ])
+        .args(["-c", lm_sensors_config.unwrap_or(NULL_DEVICE), "-j"])
         .output()
     {
         Ok(output) => output,
@@ -287,8 +278,8 @@ fn get_sensors_data_from_file(path: &str) -> color_eyre::Result<Value> {
 }
 
 pub fn get_data(
-    lm_sensors_config: &Option<String>,
-    lm_sensors_json: &Option<String>,
+    lm_sensors_config: Option<&str>,
+    lm_sensors_json: Option<&str>,
     config: &SmConfig,
 ) -> color_eyre::Result<SensorsData> {
     let raw_sensor_data = if let Some(path) = lm_sensors_json {

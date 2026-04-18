@@ -1,12 +1,9 @@
-use ratatui::{prelude::*, symbols, widgets::Block};
+use ratatui::{prelude::*, symbols};
 
-#[allow(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone)]
 pub struct BlockGauge<'a> {
-    block: Option<Block<'a>>,
     ratio: f64,
     label: Option<Line<'a>>,
-    style: Style,
     gauge_style: Style,
 }
 
@@ -30,10 +27,7 @@ impl<'a> BlockGauge<'a> {
 
 impl Widget for BlockGauge<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        buf.set_style(area, self.style);
-        self.block.as_ref().render(area, buf);
-        let inner = self.block.as_ref().map_or(area, |b| b.inner(area));
-        self.render_gauge(inner, buf);
+        self.render_gauge(area, buf);
     }
 }
 

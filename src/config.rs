@@ -32,20 +32,13 @@ impl Default for SmConfigDefaults {
 
 const DEFAULTS_SECTION: &str = "defaults";
 
-pub fn load_config(config_file: &Option<String>) -> Result<SmConfig, ConfigError> {
-    let builder = Config::builder();
-
-    let builder = if let Some(file) = config_file {
-        builder.add_source(
-            File::with_name(file)
+pub fn load_config(config_file: &str) -> Result<SmConfig, ConfigError> {
+    let config = Config::builder()
+        .add_source(
+            File::with_name(config_file)
                 .format(FileFormat::Ini)
                 .required(false),
         )
-    } else {
-        builder
-    };
-
-    let config = builder
         .add_source(Environment::with_prefix("SM_"))
         .build()?;
 

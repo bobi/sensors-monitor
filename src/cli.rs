@@ -25,7 +25,7 @@ pub struct SmArgs {
         short = 'c',
         long = "config",
         value_name = "Config file path",
-        default_value = Some("/etc/sensors-monitor.conf")
+        default_value = "/etc/sensors-monitor.conf"
     )]
-    pub config: Option<String>,
+    pub config: String,
 }

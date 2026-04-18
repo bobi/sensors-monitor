@@ -1,9 +1,7 @@
 use crate::{cli::SmArgs, config::SmConfig};
 use clap::Parser;
 use color_eyre::Result;
-use crossterm::event::{
-    self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind,
-};
+use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind};
 use crossterm::execute;
 use ratatui::DefaultTerminal;
 use std::{
@@ -31,11 +29,7 @@ fn main() -> Result<()> {
     ratatui::restore();
     execute!(stdout, DisableMouseCapture)?;
 
-    if let Err(err) = res {
-        eprintln!("{:?}", err);
-    }
-
-    Ok(())
+    res
 }
 
 struct App<'a> {
@@ -46,7 +40,7 @@ struct App<'a> {
     lm_sensors_json: Option<String>,
 }
 
-const TICK_RATE: u64 = 100;
+const TICK_RATE: Duration = Duration::from_millis(100);
 
 impl<'a> App<'a> {
     fn new(args: &'a SmArgs, config: &'a SmConfig) -> Self {
@@ -66,39 +60,35 @@ impl<'a> App<'a> {
     }
 
     fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
-        let tick_rate = Duration::from_millis(TICK_RATE);
         let mut last_tick = Instant::now();
         let mut last_refresh = Instant::now();
 
         let mut sensor_data = sensors::get_data(
-            &self.lm_sensors_config,
-            &self.lm_sensors_json,
+            self.lm_sensors_config.as_deref(),
+            self.lm_sensors_json.as_deref(),
             self.config,
         )?;
 
         while self.is_running() {
             if last_refresh.elapsed() >= self.refresh_rate {
                 sensor_data = sensors::get_data(
-                    &self.lm_sensors_config,
-                    &self.lm_sensors_json,
+                    self.lm_sensors_config.as_deref(),
+                    self.lm_sensors_json.as_deref(),
                     self.config,
                 )?;
                 last_refresh = Instant::now();
             }
 
             terminal.draw(|f| {
-                f.render_widget(
-                    ui::SmUi::new(&sensor_data, &self.refresh_rate),
-                    f.area(),
-                )
+                f.render_widget(ui::SmUi::new(&sensor_data, &self.refresh_rate), f.area())
             })?;
 
-            let timeout = tick_rate.saturating_sub(last_tick.elapsed());
+            let timeout = TICK_RATE.saturating_sub(last_tick.elapsed());
             if event::poll(timeout)? && let Event::Key(key) = event::read()? {
                 self.handle_key_press(key);
             }
 
-            if last_tick.elapsed() >= tick_rate {
+            if last_tick.elapsed() >= TICK_RATE {
                 last_tick = Instant::now();
             }
         }

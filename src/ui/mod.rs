@@ -43,18 +43,25 @@ enum SensorEntry<'a, T> {
     Blank,
     ChipLabel(&'a str),
     Sensor(&'a T),
+    Combined(&'a T),
 }
 
 fn build_sensor_entries<'a, T: SensorItem>(items: &'a [T]) -> Vec<SensorEntry<'a, T>> {
     let mut entries: Vec<SensorEntry<'a, T>> = vec![];
     let mut last_chip: Option<&'a str> = None;
-    for item in items {
+    let mut iter = items.iter().peekable();
+    while let Some(item) = iter.next() {
         let new_chip = last_chip != Some(item.chip_id());
         if new_chip {
             if last_chip.is_some() {
                 entries.push(SensorEntry::Blank);
             }
             last_chip = Some(item.chip_id());
+            let next_same_chip = iter.peek().is_some_and(|n| n.chip_id() == item.chip_id());
+            if !next_same_chip {
+                entries.push(SensorEntry::Combined(item));
+                continue;
+            }
             entries.push(SensorEntry::ChipLabel(item.chip_label()));
         } else {
             entries.push(SensorEntry::Blank);
@@ -70,6 +77,7 @@ fn render_sensor_panel<T: SensorItem>(
     buf: &mut Buffer,
     block: Block<'_>,
     render_sensor: impl Fn(&T, Rect, &mut Buffer),
+    render_combined: impl Fn(&T, Rect, &mut Buffer),
 ) {
     if items.is_empty() {
         draw_empty_panel(block, area, buf);
@@ -85,6 +93,7 @@ fn render_sensor_panel<T: SensorItem>(
             SensorEntry::Blank => {}
             SensorEntry::ChipLabel(label) => render_chip_label(label, row_area, buf),
             SensorEntry::Sensor(t) => render_sensor(t, row_area, buf),
+            SensorEntry::Combined(t) => render_combined(t, row_area, buf),
         }
     }
 }
@@ -198,6 +207,7 @@ impl<'a> SmUi<'a> {
             buf,
             block,
             |t, a, b| render_temp_row(format!("  {}", t.sensor_label).fg(Color::LightBlue), &t.value, &t.high, a, b),
+            |t, a, b| render_temp_row(t.chip_label.as_str().fg(Color::White).bold(), &t.value, &t.high, a, b),
         );
     }
 
@@ -208,6 +218,7 @@ impl<'a> SmUi<'a> {
             buf,
             block,
             |t, a, b| render_hdd_row(format!("  {}", t.sensor_label).fg(Color::LightBlue), &t.value, &t.high, &t.lowest, &t.highest, a, b),
+            |t, a, b| render_hdd_row(t.chip_label.as_str().fg(Color::White).bold(), &t.value, &t.high, &t.lowest, &t.highest, a, b),
         );
     }
 
@@ -218,6 +229,7 @@ impl<'a> SmUi<'a> {
             buf,
             block,
             |f, a, b| render_fan_row(format!("  {}", f.sensor_label).fg(Color::LightBlue), &f.value, &f.min, &f.alarm, a, b),
+            |f, a, b| render_fan_row(f.chip_label.as_str().fg(Color::White).bold(), &f.value, &f.min, &f.alarm, a, b),
         );
     }
 
@@ -228,6 +240,7 @@ impl<'a> SmUi<'a> {
             buf,
             block,
             |v, a, b| render_volt_row(format!("  {}", v.sensor_label).fg(Color::LightBlue), &v.value, &v.min, &v.max, a, b),
+            |v, a, b| render_volt_row(v.chip_label.as_str().fg(Color::White).bold(), &v.value, &v.min, &v.max, a, b),
         );
     }
 }

@@ -26,7 +26,7 @@ fn temp_gauge_parts(value: &Option<f64>, high: &Option<f64>) -> (f64, f64, Color
     (temp_val, high_val, color, ratio)
 }
 
-pub(super) fn render_temp_row<'a>(label: Span<'a>, value: &Option<f64>, high: &Option<f64>, area: Rect, buf: &mut Buffer) {
+pub(super) fn render_temp_row<'a>(label: Line<'a>, value: &Option<f64>, high: &Option<f64>, area: Rect, buf: &mut Buffer) {
     let [label_a, gauge_a] = row_cols(area);
     Paragraph::new(label).render(label_a, buf);
     render_temp_value(value, high, gauge_a, buf);
@@ -49,7 +49,7 @@ fn render_temp_value(value: &Option<f64>, high: &Option<f64>, area: Rect, buf: &
         .render(area, buf);
 }
 
-pub(super) fn render_hdd_row<'a>(label: Span<'a>, value: &Option<f64>, high: &Option<f64>, lowest: &Option<f64>, highest: &Option<f64>, area: Rect, buf: &mut Buffer) {
+pub(super) fn render_hdd_row<'a>(label: Line<'a>, value: &Option<f64>, high: &Option<f64>, lowest: &Option<f64>, highest: &Option<f64>, area: Rect, buf: &mut Buffer) {
     let [label_a, gauge_a] = row_cols(area);
     Paragraph::new(label).render(label_a, buf);
     render_hdd_value(value, high, lowest, highest, gauge_a, buf);
@@ -72,7 +72,7 @@ fn render_hdd_value(value: &Option<f64>, high: &Option<f64>, lowest: &Option<f64
 }
 
 pub(super) fn render_fan_row<'a>(
-    label: Span<'a>,
+    label: Line<'a>,
     value: &Option<f64>,
     min: &Option<f64>,
     alarm: &Option<bool>,
@@ -104,7 +104,7 @@ fn render_fan_value(
 }
 
 pub(super) fn render_volt_row<'a>(
-    label: Span<'a>,
+    label: Line<'a>,
     value: &Option<f64>,
     min: &Option<f64>,
     max: &Option<f64>,

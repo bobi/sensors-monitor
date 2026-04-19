@@ -10,6 +10,18 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph, Widget},
 };
 use render::{draw_empty_panel, render_chip_label, render_fan_row, render_hdd_row, render_temp_row, render_volt_row};
+
+fn combined_label<'a>(chip_label: &'a str, sensor_label: &'a str) -> Line<'a> {
+    if sensor_label.is_empty() {
+        Line::from(chip_label.fg(Color::White).bold())
+    } else {
+        Line::from(vec![
+            chip_label.fg(Color::White).bold(),
+            " ".into(),
+            sensor_label.fg(Color::LightBlue),
+        ])
+    }
+}
 use std::time::Duration;
 
 const TABLE_BLOCK_PADDING: Padding = Padding::symmetric(2, 1);
@@ -206,8 +218,8 @@ impl<'a> SmUi<'a> {
             area,
             buf,
             block,
-            |t, a, b| render_temp_row(format!("  {}", t.sensor_label).fg(Color::LightBlue), &t.value, &t.high, a, b),
-            |t, a, b| render_temp_row(t.chip_label.as_str().fg(Color::White).bold(), &t.value, &t.high, a, b),
+            |t, a, b| render_temp_row(Line::from(format!("  {}", t.sensor_label).fg(Color::LightBlue)), &t.value, &t.high, a, b),
+            |t, a, b| render_temp_row(combined_label(&t.chip_label, &t.sensor_label), &t.value, &t.high, a, b),
         );
     }
 
@@ -217,8 +229,8 @@ impl<'a> SmUi<'a> {
             area,
             buf,
             block,
-            |t, a, b| render_hdd_row(format!("  {}", t.sensor_label).fg(Color::LightBlue), &t.value, &t.high, &t.lowest, &t.highest, a, b),
-            |t, a, b| render_hdd_row(t.chip_label.as_str().fg(Color::White).bold(), &t.value, &t.high, &t.lowest, &t.highest, a, b),
+            |t, a, b| render_hdd_row(Line::from(format!("  {}", t.sensor_label).fg(Color::LightBlue)), &t.value, &t.high, &t.lowest, &t.highest, a, b),
+            |t, a, b| render_hdd_row(combined_label(&t.chip_label, &t.sensor_label), &t.value, &t.high, &t.lowest, &t.highest, a, b),
         );
     }
 
@@ -228,8 +240,8 @@ impl<'a> SmUi<'a> {
             area,
             buf,
             block,
-            |f, a, b| render_fan_row(format!("  {}", f.sensor_label).fg(Color::LightBlue), &f.value, &f.min, &f.alarm, a, b),
-            |f, a, b| render_fan_row(f.chip_label.as_str().fg(Color::White).bold(), &f.value, &f.min, &f.alarm, a, b),
+            |f, a, b| render_fan_row(Line::from(format!("  {}", f.sensor_label).fg(Color::LightBlue)), &f.value, &f.min, &f.alarm, a, b),
+            |f, a, b| render_fan_row(combined_label(&f.chip_label, &f.sensor_label), &f.value, &f.min, &f.alarm, a, b),
         );
     }
 
@@ -239,8 +251,8 @@ impl<'a> SmUi<'a> {
             area,
             buf,
             block,
-            |v, a, b| render_volt_row(format!("  {}", v.sensor_label).fg(Color::LightBlue), &v.value, &v.min, &v.max, a, b),
-            |v, a, b| render_volt_row(v.chip_label.as_str().fg(Color::White).bold(), &v.value, &v.min, &v.max, a, b),
+            |v, a, b| render_volt_row(Line::from(format!("  {}", v.sensor_label).fg(Color::LightBlue)), &v.value, &v.min, &v.max, a, b),
+            |v, a, b| render_volt_row(combined_label(&v.chip_label, &v.sensor_label), &v.value, &v.min, &v.max, a, b),
         );
     }
 }

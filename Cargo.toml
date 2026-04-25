@@ -16,5 +16,5 @@ clap = { version = "4.5", features = ["derive"] }
 config = "0.15"
 color-eyre = "0.6"
 crossterm = "0.29"
-time-format = "1.2.1"
+time-format = "1.2.2"
 humantime = "2.3.0"

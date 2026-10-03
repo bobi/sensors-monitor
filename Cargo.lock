@@ -1895,9 +1895,9 @@ checksum = "7694e1cfe791f8d31026952abf09c69ca6f6fa4e1a1229e18988f06a04a12dca"
 
 [[package]]
 name = "time-format"
-version = "1.2.3"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb54c799611991d3d4a66fee3ff17b9f600c2a0f8c0d34e8209dbd153ff0a87b"
+checksum = "c21b401b09485cb2403a336b3c6f9d53bd8a7273463f71b71d4f6325f7f74f6c"
 
 [[package]]
 name = "tiny-keccak"
